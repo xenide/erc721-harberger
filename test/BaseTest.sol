@@ -4,13 +4,9 @@ pragma solidity ^0.8.13;
 import { Test } from "forge-std/Test.sol";
 
 contract BaseTest is Test {
+    function setUp() public { }
 
-    function setUp() public {
-    }
+    function test_Increment() public { }
 
-    function test_Increment() public {
-    }
-
-    function testFuzz_SetNumber(uint256 x) public {
-    }
+    function testFuzz_SetNumber(uint256 x) public { }
 }

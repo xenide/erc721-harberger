@@ -36,3 +36,11 @@ jobs:
 
       - name: Run Forge tests
         run: forge test -vvv
+
+      - name: Run Forge snapshot
+        run: forge snapshot --snap snapshots/.gas-snapshot
+
+      - name: Check gas snapshots
+        uses: Rubilmax/foundry-gas-diff@v3
+        with:
+          summaryQuantile: 0.9
