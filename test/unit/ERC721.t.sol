@@ -1,6 +1,6 @@
 pragma solidity ^0.8.28;
 
-import { BaseTest, Constants, Errors, ERC20 } from "../__fixtures/BaseTest.sol";
+import { BaseTest, Constants, Errors, ERC20, console } from "../__fixtures/BaseTest.sol";
 
 contract ERC721Test is BaseTest {
     function test_mint(uint256 aPrice) public {

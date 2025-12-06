@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import { ERC721Harberger, IERC20, Constants, Errors } from "../../src/ERC721Harberger.sol";
-import { Test } from "forge-std/Test.sol";
+import { Test, console } from "forge-std/Test.sol";
 import { MintableERC20, ERC20 } from "./MintableERC20.sol";
 
 contract BaseTest is Test {
@@ -20,6 +20,11 @@ contract BaseTest is Test {
         vm.label(lAddress, aName);
 
         return lAddress;
+    }
+
+    function _stepTime(uint256 aTime) internal {
+        vm.roll(vm.getBlockNumber() + 1);
+        vm.warp(vm.getBlockTimestamp() + aTime);
     }
 
     function setUp() public {

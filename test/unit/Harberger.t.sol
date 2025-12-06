@@ -1,9 +1,66 @@
 pragma solidity ^0.8.28;
 
-import { ERC721Test, Constants, Errors } from "./ERC721.t.sol";
+import { ERC721Test, Constants, Errors, console } from "./ERC721.t.sol";
 
 contract HarbergerTest is ERC721Test {
-    function test_buy() external { }
+    function test_isDelinquent() external {
+        // arrange
+        test_mint(Constants.MIN_NFT_PRICE);
+        _stepTime(Constants.TAX_EPOCH_DURATION + Constants.GRACE_PERIOD + 1);
+
+        // act
+        bool lIsDelinquent = _erc721Harberger.isDelinquent(0);
+
+        // assert
+        assertEq(lIsDelinquent, true);
+    }
+
+    function test_seize() external {
+        // arrange
+        test_mint(Constants.MIN_NFT_PRICE);
+        _stepTime(Constants.TAX_EPOCH_DURATION + Constants.GRACE_PERIOD + 1);
+
+        // act
+        _erc721Harberger.seizeDelinquentNft(0);
+
+        // assert
+        assertEq(_erc721Harberger.ownerOf(0), address(_erc721Harberger));
+        assertEq(_erc721Harberger.isSeized(0), true);
+        assertEq(_erc721Harberger.isDelinquent(0), true);
+    }
+
+    function test_seize_cannot_seize_during_tax_epoch_and_grace_period() external {
+        // arrange
+        test_mint(Constants.MIN_NFT_PRICE);
+        _stepTime(Constants.TAX_EPOCH_DURATION);
+
+        // act & assert
+        vm.expectPartialRevert(Errors.NFTNotDelinquent.selector);
+        _erc721Harberger.seizeDelinquentNft(0);
+
+        // arrange
+        _stepTime(Constants.GRACE_PERIOD);
+
+        // act & assert
+        vm.expectPartialRevert(Errors.NFTNotDelinquent.selector);
+        _erc721Harberger.seizeDelinquentNft(0);
+    }
+
+    function test_seize_already_seized_nft() external {
+        // arrange
+        test_mint(Constants.MIN_NFT_PRICE);
+        _stepTime(Constants.TAX_EPOCH_DURATION + Constants.GRACE_PERIOD + 1);
+        _erc721Harberger.seizeDelinquentNft(0);
+
+        // act & assert
+        vm.expectRevert(Errors.NFTAlreadySeized.selector);
+        _erc721Harberger.seizeDelinquentNft(0);
+    }
+
+    function test_buy_during_tax_epoch() external { }
+    function test_buy_during_grace_period() external { }
+    function test_buy_during_auction_period() external { }
+    function test_buy_during_post_auction_period() external { }
 
     function test_buy_own_nft() external {
         // arrange
@@ -16,11 +73,13 @@ contract HarbergerTest is ERC721Test {
     }
 
     function test_buy_non_seized_nft() external {
+        // arrange
+        test_mint(Constants.MIN_NFT_PRICE);
+        _stepTime(Constants.TAX_EPOCH_DURATION + Constants.GRACE_PERIOD + 1);
 
-    }
-
-    function test_buy_already_seized_nft() external {
-
+        // act & assert
+        vm.expectRevert(Errors.BuyingNonSeizedNFT.selector);
+        _erc721Harberger.buy(0);
     }
 
     function test_buy_insufficient_fund() external { }
