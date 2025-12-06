@@ -88,11 +88,21 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         _updateTaxInfo(aTokenId, aNewPrice, lNewTaxAmt);
     }
 
-    function transferFrom(address aFrom, address aTo, uint256 aTokenId) public ensureTaxCompliance(aTokenId) override nonReentrant {
+    function transferFrom(address aFrom, address aTo, uint256 aTokenId)
+        public
+        override
+        ensureTaxCompliance(aTokenId)
+        nonReentrant
+    {
         ERC721.transferFrom(aFrom, aTo, aTokenId);
     }
 
-    function safeTransferFrom(address aFrom, address aTo, uint256 aTokenId, bytes memory aData) public ensureTaxCompliance(aTokenId) override nonReentrant {
+    function safeTransferFrom(address aFrom, address aTo, uint256 aTokenId, bytes memory aData)
+        public
+        override
+        ensureTaxCompliance(aTokenId)
+        nonReentrant
+    {
         ERC721.safeTransferFrom(aFrom, aTo, aTokenId, aData);
     }
 
