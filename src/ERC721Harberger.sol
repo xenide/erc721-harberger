@@ -87,7 +87,12 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         _updateTaxInfo(aTokenId, aNewPrice, lNewTaxAmt);
     }
 
-    function transfer(uint256 aTokenId, address aTo) external onlyTokenOwner(aTokenId) nonReentrant { }
+    function transferFrom(address aFrom, address aTo, uint256 aTokenId) override public nonReentrant {
+        require(!isDelinquent(aTokenId), Errors.NFTIsDelinquent());
+        require(!isInGracePeriod(aTokenId), Errors.NFTInGracePeriod());
+
+        ERC721.transferFrom(aFrom, aTo, aTokenId);
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     //                                    PUBLIC FUNCTIONS                                       //
@@ -185,6 +190,10 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     function isDelinquent(uint256 aTokenId) public view returns (bool) {
         // SAFETY: Addition does not overflow for human scale times
         return block.timestamp > _gracePeriodEnd(aTokenId);
+    }
+
+    function isInGracePeriod(uint256 aTokenId) public view returns (bool) {
+        return block.timestamp > taxEpochEnd(aTokenId) && block.timestamp <= _gracePeriodEnd(aTokenId);
     }
 
     function isSeized(uint256 aTokenId) public view returns (bool) {

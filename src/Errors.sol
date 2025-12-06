@@ -8,6 +8,7 @@ contract Errors {
     error BuyingOwnNFT();
 
     error NFTIsDelinquent();
+    error NFTInGracePeriod();
 
     error NFTNotDelinquent(uint256 taxEpochEnd, uint256 currentTimestamp);
     error NFTAlreadySeized();

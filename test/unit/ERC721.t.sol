@@ -60,8 +60,51 @@ contract ERC721Test is BaseTest {
 
     function test_mint_no_approval() external {
         // act & assert
-        vm.prank(_alice);
+        vm.startPrank(_alice);
+        _tokenA.approve(address(_erc721Harberger), 0);
         vm.expectRevert(ERC20.InsufficientAllowance.selector);
         _erc721Harberger.mint(Constants.MIN_NFT_PRICE);
+    }
+
+    function test_transferFrom(uint256 aFastForward) external {
+        // assume
+        uint256 lFastForward = bound(aFastForward, 0, Constants.TAX_EPOCH_DURATION);
+
+        // arrange
+        test_mint(Constants.MIN_NFT_PRICE);
+        _stepTime(lFastForward);
+        vm.prank(_alice);
+        _erc721Harberger.approve(address(_bob), 0);
+
+        // act & assert
+        vm.prank(_bob);
+        _erc721Harberger.transferFrom(_alice, _bob, 0);
+        assertEq(_erc721Harberger.ownerOf(0), _bob);
+    }
+
+    function test_transferFrom_delinquent() external {
+        // arrange
+        test_mint(Constants.MIN_NFT_PRICE);
+        _stepTime(Constants.TAX_EPOCH_DURATION + Constants.GRACE_PERIOD + 1);
+        vm.prank(_alice);
+        _erc721Harberger.approve(address(_bob), 0);
+
+        // act & assert
+        vm.prank(_bob);
+        vm.expectRevert(Errors.NFTIsDelinquent.selector);
+        _erc721Harberger.transferFrom(_alice, _bob, 0);
+    }
+
+    function test_transferFrom_during_grace_period() external {
+        // arrange
+        test_mint(Constants.MIN_NFT_PRICE);
+        _stepTime(Constants.TAX_EPOCH_DURATION + 1);
+        vm.prank(_alice);
+        _erc721Harberger.approve(address(_bob), 0);
+
+        // act & assert
+        vm.prank(_bob);
+        vm.expectRevert(Errors.NFTInGracePeriod.selector);
+        _erc721Harberger.transferFrom(_alice, _bob, 0);
     }
 }
