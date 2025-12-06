@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
-import { ERC721 } from "../lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
-import { ERC20 } from "../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
-import { IERC20, SafeERC20 } from "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Ownable } from "../lib/solady/src/auth/Ownable.sol";
-import { ReentrancyGuardTransient } from "../lib/solady/src/utils/ReentrancyGuardTransient.sol";
-import { FixedPointMathLib } from "../lib/solady/src/utils/FixedPointMathLib.sol";
-import { IERC721Harberger } from "./interfaces/IERC721Harberger.sol";
-import { TaxInfo } from "./structs/TaxInfo.sol";
+import { Utils } from "./libraries/Utils.sol";
 import { Constants } from "./Constants.sol";
+import { ERC20 } from "../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import { ERC721 } from "../lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import { Errors } from "./Errors.sol";
 import { Events } from "./Events.sol";
+import { FixedPointMathLib } from "../lib/solady/src/utils/FixedPointMathLib.sol";
+import { IERC20, SafeERC20 } from "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC721Harberger } from "./interfaces/IERC721Harberger.sol";
+import { Ownable } from "../lib/solady/src/auth/Ownable.sol";
+import { ReentrancyGuardTransient } from "../lib/solady/src/utils/ReentrancyGuardTransient.sol";
+import { TaxInfo } from "./structs/TaxInfo.sol";
 
 contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTransient, Events {
     using SafeERC20 for IERC20;
@@ -70,23 +71,19 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     function setPrice(uint256 aTokenId, uint256 aNewPrice) external onlyTokenOwner(aTokenId) nonReentrant {
+        require(!isDelinquent(aTokenId), Errors.NFTIsDelinquent());
         require(aNewPrice >= Constants.MIN_NFT_PRICE, Errors.NFTPriceTooLow());
-        uint256 lPrevPrice = _taxInfo[aTokenId].price;
+        uint256 lNewTaxAmt = _calcTaxDue(aNewPrice);
+        // subtraction will underflow if it's in the grace period, which is fine
+        uint256 lRemainingTaxCredit = _taxInfo[aTokenId].lastPaidAmt * (taxEpochEnd(aTokenId) - block.timestamp) / Constants.TAX_EPOCH_DURATION;
 
-        // If price is higher than the current, owner has to pay additional taxes till the end of the epoch
-        if (aNewPrice > lPrevPrice) {
-            uint256 lPriceDiff = aNewPrice - lPrevPrice;
-            // TODO: fill in impl
-            uint256 lTimeTillEpochEnd;
-            uint256 lTaxableAmt;
-            _pullPayment(msg.sender, _calcTaxDue(lTaxableAmt));
-
-            // TODO: update lastPaidTime + lastPaidAmt
+        if (lNewTaxAmt > lRemainingTaxCredit) {
+            _pullPayment(msg.sender, lNewTaxAmt - lRemainingTaxCredit);
         }
-        // If price is equal or lower, there is no refund to prevent griefing
+        // if there's a surplus remaining tax credit, the owner forfeits it
         else { }
 
-        _taxInfo[aTokenId].price = aNewPrice;
+        _updateTaxInfo(aTokenId, aNewPrice, lNewTaxAmt);
     }
 
     function transfer(uint256 aTokenId, address aTo) external onlyTokenOwner(aTokenId) nonReentrant { }
@@ -100,10 +97,8 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     function mint(uint256 aInitialPrice) external nonReentrant {
         require(aInitialPrice >= Constants.MIN_NFT_PRICE, Errors.NFTPriceTooLow());
         uint256 lTokenId = _tokenCounter++;
-        _taxInfo[lTokenId].price = aInitialPrice;
-        _taxInfo[lTokenId].lastPaidTimestamp = block.timestamp;
         uint256 lTaxDue = _calcTaxDue(aInitialPrice);
-        _taxInfo[lTokenId].lastPaidAmt = lTaxDue;
+        _updateTaxInfo(lTokenId, aInitialPrice, lTaxDue);
 
         _safeMint(msg.sender, lTokenId);
         _pullPayment(msg.sender, lTaxDue);
@@ -134,6 +129,8 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
             else {
                 assert(block.timestamp > taxEpochEnd(aTokenId));
             }
+
+            // TODO: refund owner at that listed price
         }
         // Case 2: Buy during the reverse dutch auction period, price decays to minimum
         else if (block.timestamp < lAuctionPeriodEnd) {
@@ -162,7 +159,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
             _refundPayment(lPrevOwnerStorage, lTaxesToRefundPrevOwner);
         }
 
-        _updateTaxInfo(lPrice, aTokenId, lTaxes);
+        _updateTaxInfo(aTokenId, lPrice, lTaxes);
         address lPrevOwner = _update(msg.sender, aTokenId, address(0));
         assert(lPrevOwner == lPrevOwnerStorage);
         emit NFTBought(lPrevOwnerStorage, msg.sender, aTokenId, lPrice);
@@ -220,17 +217,15 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         PAYMENT_TOKEN.safeTransfer(aTo, aAmount);
     }
 
-    function _updateTaxInfo(uint256 aPrice, uint256 aTokenId, uint256 aTaxPaid) internal {
+    function _updateTaxInfo(uint256 aTokenId, uint256 aPrice, uint256 aTaxPaid) internal {
         _taxInfo[aTokenId].price = aPrice;
         _taxInfo[aTokenId].lastPaidTimestamp = block.timestamp;
         _taxInfo[aTokenId].lastPaidAmt = aTaxPaid;
     }
 
-    /// @param aTaxableAmt in WAD
+    /// @param aTaxableAmt in native precision
     /// @return rTaxableAmt The amount to be taxed, in the PAYMENT_TOKEN, denominated in its native precision.
     function _calcTaxDue(uint256 aTaxableAmt) internal view returns (uint256 rTaxableAmt) {
-        // we round up to avoid losing fractional value
-        // TODO: need to +1 in the native precision, as this is insufficient
-        rTaxableAmt = aTaxableAmt.mulWadUp(taxRate);
+        rTaxableAmt = Utils.calcTaxDue(aTaxableAmt, PAYMENT_TOKEN_PRECISION_MULTIPLIER, taxRate);
     }
 }

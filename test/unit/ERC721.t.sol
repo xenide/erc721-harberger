@@ -8,11 +8,8 @@ contract ERC721Test is BaseTest {
         // assume
         uint256 lPrice = bound(aPrice, Constants.MIN_NFT_PRICE, _tokenA.balanceOf(_alice) / 2);
 
-        // arrange
-        vm.startPrank(_alice);
-        _tokenA.approve(address(_erc721Harberger), lPrice);
-
         // act
+        vm.startPrank(_alice);
         _erc721Harberger.mint(lPrice);
         vm.stopPrank();
 

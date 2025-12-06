@@ -32,9 +32,12 @@ contract BaseTest is Test {
         _tokenB = new MintableERC20("TokenB", "TB", 18);
         _erc721Harberger = new ERC721Harberger(address(this), IERC20(address(_tokenA)), address(this));
 
-        _tokenA.mint(_alice, 100e18);
-        _tokenA.mint(_bob, 100e18);
-        _tokenA.mint(_cal, 100e18);
+        _tokenA.mint(_alice, 1_000_000e6);
+        _tokenA.mint(_bob, 1_000_000e6);
+        _tokenA.mint(_cal, 1_000_000e6);
+
+        vm.prank(_alice);
+        _tokenA.approve(address(_erc721Harberger), type(uint256).max);
     }
 
     function test_PrecisionMultiplierCorrect() external {

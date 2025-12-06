@@ -61,13 +61,13 @@ contract HarbergerTest is ERC721Test {
     function test_buy_during_tax_epoch() external {
 
         // assert
-        // check that taxes refunded
+        // check that taxes refunded + owner is paid the exact price
     }
     function test_buy_during_grace_period() external {
-        // check that taxes not refunded
+        // check that taxes not refunded but owner is paid the exact price
     }
     function test_buy_during_auction_period() external {
-        // check taxes not refunded to prev owner
+        // check taxes not refunded to prev owner + contract gets the price
     }
 
     function test_buy_during_post_auction_period() external {
@@ -87,6 +87,7 @@ contract HarbergerTest is ERC721Test {
         assertEq(_erc721Harberger.ownerOf(0), _bob);
         assertEq(_erc721Harberger.balanceOf(_bob), 1);
         assertEq(_erc721Harberger.getPrice(0), Constants.MIN_NFT_PRICE);
+        assertEq(_tokenA.balanceOf(address(_erc721Harberger)), Constants.MIN_NFT_PRICE);
         assertEq(_tokenA.balanceOf(_alice), lAliceStartingBal);
     }
 
@@ -129,24 +130,30 @@ contract HarbergerTest is ERC721Test {
     function test_setPrice_Higher(uint256 aOriginalPrice, uint256 aNewPrice) external {
         // arrange
         test_mint(aOriginalPrice);
+        _stepTime(Constants.TAX_EPOCH_DURATION / 2);
         uint256 lOriginalPrice = _erc721Harberger.getPrice(0);
+        uint256 lAliceBal = _tokenA.balanceOf(_alice);
 
         // assume
-        uint256 lNewPrice = bound(aNewPrice, lOriginalPrice + 1, _tokenA.balanceOf(_alice));
+        uint256 lNewPrice = bound(aNewPrice, lOriginalPrice + 1, _tokenA.balanceOf(_alice) * 8 / 10);
 
         // act
+        console.log(_tokenA.balanceOf(_alice));
+        console.log(_tokenA.allowance(_alice, address(_erc721Harberger)));
         vm.prank(_alice);
         _erc721Harberger.setPrice(0, lNewPrice);
 
         // assert
         assertEq(_erc721Harberger.getPrice(0), lNewPrice);
-        // TODO: check taxes paid
+        assertLt(_tokenA.balanceOf(_alice), lAliceBal);
     }
 
     function test_setPrice_Lower(uint256 aOriginalPrice) external {
         // arrange
         test_mint(aOriginalPrice);
+        _stepTime(Constants.TAX_EPOCH_DURATION);
         uint256 lOriginalPrice = _erc721Harberger.getPrice(0);
+        uint256 lContractBal = _tokenA.balanceOf(address(_erc721Harberger));
 
         // assume
         uint256 lNewPrice = Constants.MIN_NFT_PRICE;
@@ -157,7 +164,7 @@ contract HarbergerTest is ERC721Test {
 
         // assert
         assertEq(_erc721Harberger.getPrice(0), lNewPrice);
-        // TODO: check that no taxes paid / refunded
+        assertGe(_tokenA.balanceOf(address(_erc721Harberger)), lContractBal);
     }
 
     function test_setPrice_TooLow() external {
@@ -168,5 +175,27 @@ contract HarbergerTest is ERC721Test {
         vm.prank(_alice);
         vm.expectRevert(Errors.NFTPriceTooLow.selector);
         _erc721Harberger.setPrice(0, Constants.MIN_NFT_PRICE - 1);
+    }
+
+    function test_setPrice_delinquent() external {
+        // arrange
+        test_mint(Constants.MIN_NFT_PRICE);
+        _stepTime(Constants.TAX_EPOCH_DURATION + Constants.GRACE_PERIOD + 1);
+
+        // act & assert
+        vm.prank(_alice);
+        vm.expectRevert(Errors.NFTIsDelinquent.selector);
+        _erc721Harberger.setPrice(0, Constants.MIN_NFT_PRICE);
+    }
+
+    function test_setPrice_during_grace_period() external{
+        // arrange
+        test_mint(Constants.MIN_NFT_PRICE);
+        _stepTime(Constants.TAX_EPOCH_DURATION + 10);
+
+        // act & assert
+        vm.prank(_alice);
+        vm.expectRevert();
+        _erc721Harberger.setPrice(0, Constants.MIN_NFT_PRICE + 1);
     }
 }
