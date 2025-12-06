@@ -133,6 +133,7 @@ contract HarbergerTest is ERC721Test {
         _stepTime(Constants.TAX_EPOCH_DURATION / 2);
         uint256 lOriginalPrice = _erc721Harberger.getPrice(0);
         uint256 lAliceBal = _tokenA.balanceOf(_alice);
+        uint256 lContractBal = _tokenA.balanceOf(address(_erc721Harberger));
 
         // assume
         uint256 lNewPrice = bound(aNewPrice, lOriginalPrice + 1, _tokenA.balanceOf(_alice) * 8 / 10);
@@ -146,13 +147,13 @@ contract HarbergerTest is ERC721Test {
         // assert
         assertEq(_erc721Harberger.getPrice(0), lNewPrice);
         assertLt(_tokenA.balanceOf(_alice), lAliceBal);
+        assertGt(_tokenA.balanceOf(address(_erc721Harberger)), lContractBal);
     }
 
     function test_setPrice_Lower(uint256 aOriginalPrice) external {
         // arrange
         test_mint(aOriginalPrice);
         _stepTime(Constants.TAX_EPOCH_DURATION);
-        uint256 lOriginalPrice = _erc721Harberger.getPrice(0);
         uint256 lContractBal = _tokenA.balanceOf(address(_erc721Harberger));
 
         // assume
@@ -164,6 +165,7 @@ contract HarbergerTest is ERC721Test {
 
         // assert
         assertEq(_erc721Harberger.getPrice(0), lNewPrice);
+        // contract should never lose/refund money
         assertGe(_tokenA.balanceOf(address(_erc721Harberger)), lContractBal);
     }
 
