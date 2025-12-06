@@ -1,23 +1,40 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.10;
 
+import { IERC20 } from "../../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+
 interface IERC721Harberger {
     // Pricing of the NFT
-    function setPrice(uint256 aPrice) external;
+    function setPrice(uint256 aTokenId, uint256 aPrice) external;
     function getPrice(uint256 aTokenId) external view returns (uint256);
 
     // Taxation
-    function setTaxRate(uint256 taxRate) external;
+    function setTaxRate(uint256 aTaxRate) external;
 
-    // returns the singular tax rate for the NFT collection
+    /// @notice Universal rate for all NFTs in this collection.
     function taxRate() external view returns (uint256);
-    function payTax() external;
+    // providing an array to enhance UX as one wallet might have many NFTs
+    function payTaxes(uint256[] calldata aTokenIds) external;
 
-    function withdrawTaxesToDao() external;
+    function PAYMENT_TOKEN() external view returns (IERC20);
 
-    function currentTaxEpoch() external;
-    function taxEpochEnd() external;
+    // can be called by anyone
+    function sweepTaxesToDao() external;
+    // the DAO multi-sig / timelock
+    function feeReceiver() external view returns (address);
+
+    function TAX_EPOCH_DURATION() external view returns (uint256);
+    function currentTaxEpoch() external view returns (uint256);
+    function taxEpochEnd() external view returns (uint256);
 
     // Ownership transfer
-    function buy() external;
+    // Pulls the ERC20 payment token from the caller's wallet. So caller must have approved the amount
+    // Refunds excess payment back to buyer
+    // Price of the NFT should remain unchanged after buying it
+    function buy(uint256 aTokenId) external;
+
+    // Mints the NFT to the caller.
+    // Caller has to pay taxes on the declared value of the NFT
+    // Pulls payment from the caller so must already have the approval done
+    function mint(uint256 aInitialPrice) external;
 }
