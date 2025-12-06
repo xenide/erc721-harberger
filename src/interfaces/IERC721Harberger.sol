@@ -11,6 +11,9 @@ interface IERC721Harberger {
     // Taxation
     function setTaxRate(uint256 aTaxRate) external;
 
+    function TAX_EPOCH_DURATION() external view returns (uint256);
+    // Grace period after end of tax epoch before seizing the NFT
+    function GRACE_PERIOD() external view returns (uint256);
     /// @notice Universal rate for all NFTs in this collection.
     function taxRate() external view returns (uint256);
     // providing an array to enhance UX as one wallet might have many NFTs
@@ -23,9 +26,7 @@ interface IERC721Harberger {
     // the DAO multi-sig / timelock
     function feeReceiver() external view returns (address);
 
-    function TAX_EPOCH_DURATION() external view returns (uint256);
-    function currentTaxEpoch() external view returns (uint256);
-    function taxEpochEnd() external view returns (uint256);
+    function taxEpochEnd(uint256 aTokenId) external view returns (uint256);
 
     // Ownership transfer
     // Pulls the ERC20 payment token from the caller's wallet. So caller must have approved the amount
@@ -37,4 +38,10 @@ interface IERC721Harberger {
     // Caller has to pay taxes on the declared value of the NFT
     // Pulls payment from the caller so must already have the approval done
     function mint(uint256 aInitialPrice) external;
+
+    // Returns true if the NFT is a delinquent state (i.e. has unpaid taxes)
+    function isDelinquent(uint256 aTokenId) view external returns (bool);
+
+    // NFT becomes owned by the contract, ready for auction
+    function seizeDelinquentNft(uint256 aTokenId) external;
 }

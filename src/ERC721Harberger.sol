@@ -22,6 +22,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
 
     uint256 public taxRate = Constants.DEFAULT_TAX_RATE;
     uint256 public immutable TAX_EPOCH_DURATION = Constants.TAX_EPOCH_DURATION;
+    uint256 public immutable GRACE_PERIOD = Constants.GRACE_PERIOD;
     IERC20 public immutable PAYMENT_TOKEN;
     uint256 public immutable PAYMENT_TOKEN_PRECISION_MULTIPLIER;
     address public feeReceiver;
@@ -121,9 +122,9 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
 
     function payTaxes(uint256[] calldata aTokenIds) external { }
 
-    function currentTaxEpoch() external view returns (uint256) { }
-
-    function taxEpochEnd() external view returns (uint256) { }
+    function taxEpochEnd(uint256 aTokenId) external view returns (uint256) { }
+    function isDelinquent(uint256 aTokenId) external view returns (bool) {}
+    function seizeDelinquentNft(uint256 aTokenId) external {}
 
     function sweepTaxesToDao() external {
         if (feeReceiver != address(0)) {
