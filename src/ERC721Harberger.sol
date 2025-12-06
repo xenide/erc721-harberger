@@ -5,17 +5,57 @@ import { IERC721Harberger } from "./interfaces/IERC721Harberger.sol";
 import { ReentrancyGuardTransient } from "../lib/solady/src/utils/ReentrancyGuardTransient.sol";
 import { Ownable } from "../lib/solady/src/auth/Ownable.sol";
 import { ERC721 } from "../lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
+import { DEFAULT_TAX_RATE, MAX_TAX_RATE } from "./Constants.sol";
+import { Errors } from "./Errors.sol";
+import { Events } from "./Events.sol";
 
 contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTransient {
-    constructor() ERC721("Harberger", "HAR") { }
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    //                                        STORAGE                                            //
+    ///////////////////////////////////////////////////////////////////////////////////////////////
 
-    function setPrice(uint256 price) external { }
+    mapping(uint256 => uint256) private _price;
 
-    function getPrice() external view returns (uint256) { }
+    /// @notice Universal rate for all NFTs in this collection.
+    uint256 public taxRate = DEFAULT_TAX_RATE;
 
-    function setTaxRate(uint256 taxRate) external { }
+    uint256 public immutable TAX_EPOCH_DURATION = 60 days;
 
-    function getTaxRate() external view returns (uint256) { }
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    //                            CONSTRUCTOR / FALLBACKS                                        //
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    constructor(address aOwner) ERC721("Harberger", "HAR") {
+        _initializeOwner(aOwner);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    //                                     MODIFIERS                                             //
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  GOVERNOR FUNCTIONS                                       //
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    function setTaxRate(uint256 aTaxRate) external onlyOwner {
+        require(aTaxRate <= MAX_TAX_RATE, Errors.TaxRateTooHigh());
+        taxRate = aTaxRate;
+        emit Events.TaxRateSet(aTaxRate);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    //                            TOKEN OWNER FUNCTIONS                                          //
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    function setPrice(uint256 aPrice) external { }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    //                         OWNERSHIP TRANSFER FUNCTIONS                                      //
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    function getPrice(uint256 aTokenId) external view returns (uint256 rPrice) {
+        rPrice = _price[aTokenId];
+    }
 
     function payTax() external { }
 

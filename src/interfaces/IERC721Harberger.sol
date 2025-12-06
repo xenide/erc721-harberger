@@ -3,12 +3,14 @@ pragma solidity ^0.8.10;
 
 interface IERC721Harberger {
     // Pricing of the NFT
-    function setPrice(uint256 price) external;
-    function getPrice() external view returns (uint256);
+    function setPrice(uint256 aPrice) external;
+    function getPrice(uint256 aTokenId) external view returns (uint256);
 
     // Taxation
     function setTaxRate(uint256 taxRate) external;
-    function getTaxRate() external view returns (uint256);
+
+    // returns the singular tax rate for the NFT collection
+    function taxRate() external view returns (uint256);
     function payTax() external;
 
     function withdrawTaxesToDao() external;
