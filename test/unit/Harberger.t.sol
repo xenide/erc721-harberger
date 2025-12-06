@@ -128,6 +128,25 @@ contract HarbergerTest is ERC721Test {
 
     function test_buy_insufficient_fund() external { }
 
+    function test_getPrice() external {
+        // arrange
+        test_mint(Constants.MIN_NFT_PRICE);
+
+        // act & assert
+        vm.prank(vm.randomAddress());
+        assertEq(_erc721Harberger.getPrice(0), Constants.MIN_NFT_PRICE);
+    }
+
+    function test_getPrice_nonexistent_token(uint256 aTokenId) external {
+        // assume
+        vm.assume(aTokenId != 0);
+
+        // act & assert
+        vm.expectPartialRevert(IERC721Errors.ERC721NonexistentToken.selector);
+        _erc721Harberger.getPrice(aTokenId);
+    }
+
+
     function test_setPrice_Higher(uint256 aOriginalPrice, uint256 aNewPrice) external {
         // arrange
         test_mint(aOriginalPrice);

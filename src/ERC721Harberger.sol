@@ -95,7 +95,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     // _safeMint is reused from OZ's impl
-    // TODO: do I need to return the tokenId? milady doesn't reutrn
+    // TODO: do I need to return the tokenId? milady doesn't return it
     function mint(uint256 aInitialPrice) external nonReentrant {
         require(aInitialPrice >= Constants.MIN_NFT_PRICE, Errors.NFTPriceTooLow());
         uint256 lTokenId = _tokenCounter++;
@@ -168,6 +168,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     }
 
     function getPrice(uint256 aTokenId) external view returns (uint256 rPrice) {
+        _requireOwned(aTokenId);
         rPrice = _taxInfo[aTokenId].price;
     }
 

@@ -5,6 +5,7 @@ import { IERC20 } from "../../lib/openzeppelin-contracts/contracts/token/ERC20/u
 
 interface IERC721Harberger {
     // Pricing of the NFT
+    // reverts if token doesn't exist
     function getPrice(uint256 aTokenId) external view returns (uint256);
     // Restarts the epoch, charges the owner more taxes if the price is higher than the current
     // if price is lower than current, there is no refund of previous taxes
