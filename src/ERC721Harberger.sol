@@ -87,7 +87,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         _updateTaxInfo(aTokenId, aNewPrice, lNewTaxAmt);
     }
 
-    function transferFrom(address aFrom, address aTo, uint256 aTokenId) override public nonReentrant {
+    function transferFrom(address aFrom, address aTo, uint256 aTokenId) public override nonReentrant {
         require(!isDelinquent(aTokenId), Errors.NFTIsDelinquent());
         require(!isInGracePeriod(aTokenId), Errors.NFTInGracePeriod());
 

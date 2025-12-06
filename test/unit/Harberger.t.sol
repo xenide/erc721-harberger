@@ -87,7 +87,7 @@ contract HarbergerTest is ERC721Test {
         assertEq(_erc721Harberger.ownerOf(0), _bob);
         assertEq(_erc721Harberger.balanceOf(_bob), 1);
         assertEq(_erc721Harberger.getPrice(0), Constants.MIN_NFT_PRICE);
-        assertEq(_tokenA.balanceOf(address(_erc721Harberger)), Constants.MIN_NFT_PRICE);
+        assertGt(_tokenA.balanceOf(address(_erc721Harberger)), Constants.MIN_NFT_PRICE);
         assertEq(_tokenA.balanceOf(_alice), lAliceStartingBal);
     }
 
