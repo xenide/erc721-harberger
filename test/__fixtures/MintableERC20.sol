@@ -1,4 +1,4 @@
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.28;
 
 import { ERC20 } from "../../lib/solady/src/tokens/ERC20.sol";
 

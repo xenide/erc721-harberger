@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.10;
+pragma solidity ^0.8.28;
 
 library Constants {
     uint256 public constant TAX_EPOCH_DURATION = 60 days;

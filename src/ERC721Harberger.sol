@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.28;
 
 import { ERC721 } from "../lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import { ERC20 } from "../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
@@ -123,12 +123,12 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
 
         // Case 1: Buy during tax epoch and grace period
         if (block.timestamp <= _gracePeriodEnd(aTokenId)) {
-
             lPrice = lInfo.price;
 
             if (block.timestamp <= taxEpochEnd(aTokenId)) {
                 // TODO: ensure correctness of this operation
-                lTaxesToRefundPrevOwner = (taxEpochEnd(aTokenId) - block.timestamp) * lInfo.lastPaidAmt / TAX_EPOCH_DURATION;
+                lTaxesToRefundPrevOwner =
+                    (taxEpochEnd(aTokenId) - block.timestamp) * lInfo.lastPaidAmt / TAX_EPOCH_DURATION;
             }
             // if it happens during grace period, prev owner is already owing taxes so there will be no refund
             else {
@@ -141,7 +141,8 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
 
             // reverse dutch auction from end of grace period to end of auction
             // with prices slowing decaying to the minimum price
-            lPrice =  lInfo.price.fullMulDiv(lAuctionPeriodEnd - block.timestamp, Constants.TAX_EPOCH_DURATION).max(Constants.MIN_NFT_PRICE);
+            lPrice = lInfo.price.fullMulDiv(lAuctionPeriodEnd - block.timestamp, Constants.TAX_EPOCH_DURATION)
+                .max(Constants.MIN_NFT_PRICE);
         }
         // Case 3: Beyond the auction period, buyer pays minimum price
         else {
