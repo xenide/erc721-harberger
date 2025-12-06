@@ -58,7 +58,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     function setTaxRate(uint256 aTaxRate) external onlyOwner {
         require(aTaxRate <= Constants.MAX_TAX_RATE, Errors.TaxRateTooHigh());
         taxRate = aTaxRate;
-        emit Events.TaxRateSet(aTaxRate);
+        emit TaxRateSet(aTaxRate);
     }
 
     function recoverERC20(IERC20 aToken, uint256 aAmount) external onlyOwner {
@@ -69,7 +69,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     //                            TOKEN OWNER FUNCTIONS                                          //
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
-    function setPrice(uint256 aTokenId, uint256 aNewPrice) external onlyTokenOwner(aTokenId) {
+    function setPrice(uint256 aTokenId, uint256 aNewPrice) external onlyTokenOwner(aTokenId) nonReentrant {
         require(aNewPrice >= Constants.MIN_NFT_PRICE, Errors.NFTPriceTooLow());
         uint256 lPrevPrice = _taxInfo[aTokenId].price;
 
@@ -89,7 +89,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         _taxInfo[aTokenId].price = aNewPrice;
     }
 
-    function transfer(uint256 aTokenId, address aTo) external { }
+    function transfer(uint256 aTokenId, address aTo) external onlyTokenOwner(aTokenId) nonReentrant { }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     //                                    PUBLIC FUNCTIONS                                       //
@@ -97,7 +97,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
 
     // _safeMint is reused from OZ's impl
     // TODO: do I need to return the tokenId?
-    function mint(uint256 aInitialPrice) external {
+    function mint(uint256 aInitialPrice) external nonReentrant {
         require(aInitialPrice >= Constants.MIN_NFT_PRICE, Errors.NFTPriceTooLow());
         uint256 lTokenId = _tokenCounter++;
         _taxInfo[lTokenId].price = aInitialPrice;
@@ -105,12 +105,12 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         uint256 lTaxDue = _calcTaxDue(aInitialPrice);
         _taxInfo[lTokenId].lastPaidAmt = lTaxDue;
 
-        _pullPayment(msg.sender, lTaxDue);
         _safeMint(msg.sender, lTokenId);
+        _pullPayment(msg.sender, lTaxDue);
     }
 
     /// @inheritdoc IERC721Harberger
-    function buy(uint256 aTokenId, uint256 aMaxPriceIncludingTaxes) external {
+    function buy(uint256 aTokenId, uint256 aMaxPriceIncludingTaxes) external nonReentrant {
         address lPrevOwnerStorage = _ownerOf(aTokenId);
         require(msg.sender != lPrevOwnerStorage, Errors.BuyingOwnNFT());
 
@@ -162,7 +162,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
             _refundPayment(lPrevOwnerStorage, lTaxesToRefundPrevOwner);
         }
 
-        _updateTaxInfo(aTokenId, lTaxes);
+        _updateTaxInfo(lPrice, aTokenId, lTaxes);
         address lPrevOwner = _update(msg.sender, aTokenId, address(0));
         assert(lPrevOwner == lPrevOwnerStorage);
         emit NFTBought(lPrevOwnerStorage, msg.sender, aTokenId, lPrice);
@@ -220,7 +220,8 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         PAYMENT_TOKEN.safeTransfer(aTo, aAmount);
     }
 
-    function _updateTaxInfo(uint256 aTokenId, uint256 aTaxPaid) internal {
+    function _updateTaxInfo(uint256 aPrice, uint256 aTokenId, uint256 aTaxPaid) internal {
+        _taxInfo[aTokenId].price = aPrice;
         _taxInfo[aTokenId].lastPaidTimestamp = block.timestamp;
         _taxInfo[aTokenId].lastPaidAmt = aTaxPaid;
     }

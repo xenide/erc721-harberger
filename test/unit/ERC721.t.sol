@@ -1,6 +1,7 @@
 pragma solidity ^0.8.28;
 
-import { BaseTest, Constants, Errors, ERC20, console } from "../__fixtures/BaseTest.sol";
+import { BaseTest, Constants, Errors } from "../__fixtures/BaseTest.sol";
+import { ERC20 } from "../__fixtures/MintableERC20.sol";
 
 contract ERC721Test is BaseTest {
     function test_mint(uint256 aPrice) public {
@@ -49,9 +50,9 @@ contract ERC721Test is BaseTest {
         assertEq(_erc721Harberger.getPrice(0), lPrice1);
         assertEq(_erc721Harberger.getPrice(1), lPrice2);
         assertEq(_erc721Harberger.getPrice(2), lPrice3);
-        assertEq(_erc721Harberger.balanceOf(_alice), 1) ;
-        assertEq(_erc721Harberger.balanceOf(_bob), 1) ;
-        assertEq(_erc721Harberger.balanceOf(_cal), 1) ;
+        assertEq(_erc721Harberger.balanceOf(_alice), 1);
+        assertEq(_erc721Harberger.balanceOf(_bob), 1);
+        assertEq(_erc721Harberger.balanceOf(_cal), 1);
     }
 
     function test_mint_price_too_low() external {
@@ -62,6 +63,7 @@ contract ERC721Test is BaseTest {
 
     function test_mint_no_approval() external {
         // act & assert
+        vm.prank(_alice);
         vm.expectRevert(ERC20.InsufficientAllowance.selector);
         _erc721Harberger.mint(Constants.MIN_NFT_PRICE);
     }

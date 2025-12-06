@@ -2,8 +2,8 @@
 pragma solidity ^0.8.28;
 
 import { ERC721Harberger, IERC20, Constants, Errors } from "../../src/ERC721Harberger.sol";
-import { Test, console } from "forge-std/Test.sol";
-import { MintableERC20, ERC20 } from "./MintableERC20.sol";
+import { Test } from "forge-std/Test.sol";
+import { MintableERC20 } from "./MintableERC20.sol";
 
 contract BaseTest is Test {
     ERC721Harberger internal _erc721Harberger;

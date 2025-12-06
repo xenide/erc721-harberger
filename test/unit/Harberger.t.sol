@@ -1,6 +1,7 @@
 pragma solidity ^0.8.28;
 
-import { ERC721Test, Constants, Errors, console } from "./ERC721.t.sol";
+import { ERC721Test, Constants, Errors } from "./ERC721.t.sol";
+import { console } from "../../lib/forge-std/src/Test.sol";
 
 contract HarbergerTest is ERC721Test {
     function test_isDelinquent() external {
@@ -59,7 +60,6 @@ contract HarbergerTest is ERC721Test {
 
     function test_buy_during_tax_epoch() external {
 
-
         // assert
         // check that taxes refunded
     }
@@ -69,17 +69,25 @@ contract HarbergerTest is ERC721Test {
     function test_buy_during_auction_period() external {
         // check taxes not refunded to prev owner
     }
+
     function test_buy_during_post_auction_period() external {
         // arrange
-        test_mint(Constants.MIN_NFT_PRICE);
+        test_mint(Constants.MIN_NFT_PRICE * 5);
+        uint256 lAliceStartingBal = _tokenA.balanceOf(_alice);
         _stepTime(Constants.TAX_EPOCH_DURATION * 3);
         _erc721Harberger.seizeDelinquentNft(0);
 
         // act
-        _erc721Harberger.buy(0, Constants.MIN_NFT_PRICE);
+        vm.startPrank(_bob);
+        _tokenA.approve(address(_erc721Harberger), type(uint256).max);
+        _erc721Harberger.buy(0, Constants.MIN_NFT_PRICE * 2);
+        vm.stopPrank();
 
-        // check that it's at the min price
-        // check that taxes not refunded to prev owner
+        // assert
+        assertEq(_erc721Harberger.ownerOf(0), _bob);
+        assertEq(_erc721Harberger.balanceOf(_bob), 1);
+        assertEq(_erc721Harberger.getPrice(0), Constants.MIN_NFT_PRICE);
+        assertEq(_tokenA.balanceOf(_alice), lAliceStartingBal);
     }
 
     function test_buy_max_price_exceeded(uint256 aPrice) external {
