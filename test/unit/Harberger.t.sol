@@ -57,10 +57,44 @@ contract HarbergerTest is ERC721Test {
         _erc721Harberger.seizeDelinquentNft(0);
     }
 
-    function test_buy_during_tax_epoch() external { }
-    function test_buy_during_grace_period() external { }
-    function test_buy_during_auction_period() external { }
-    function test_buy_during_post_auction_period() external { }
+    function test_buy_during_tax_epoch() external {
+
+
+        // assert
+        // check that taxes refunded
+    }
+    function test_buy_during_grace_period() external {
+        // check that taxes not refunded
+    }
+    function test_buy_during_auction_period() external {
+        // check taxes not refunded to prev owner
+    }
+    function test_buy_during_post_auction_period() external {
+        // arrange
+        test_mint(Constants.MIN_NFT_PRICE);
+        _stepTime(Constants.TAX_EPOCH_DURATION * 3);
+        _erc721Harberger.seizeDelinquentNft(0);
+
+        // act
+        _erc721Harberger.buy(0, Constants.MIN_NFT_PRICE);
+
+        // check that it's at the min price
+        // check that taxes not refunded to prev owner
+    }
+
+    function test_buy_max_price_exceeded(uint256 aPrice) external {
+        // assume
+        uint256 lPrice = bound(aPrice, Constants.MIN_NFT_PRICE + 1, _tokenA.balanceOf(_alice) / 2);
+
+        // arrange
+        test_mint(lPrice);
+        _stepTime(Constants.TAX_EPOCH_DURATION + Constants.GRACE_PERIOD + 1);
+        _erc721Harberger.seizeDelinquentNft(0);
+
+        // act & assert
+        vm.expectRevert(Errors.MaxPriceIncludingTaxesExceeded.selector);
+        _erc721Harberger.buy(0, lPrice);
+    }
 
     function test_buy_own_nft() external {
         // arrange
@@ -69,7 +103,7 @@ contract HarbergerTest is ERC721Test {
         // act & assert
         vm.prank(_alice);
         vm.expectRevert(Errors.BuyingOwnNFT.selector);
-        _erc721Harberger.buy(0);
+        _erc721Harberger.buy(0, Constants.MIN_NFT_PRICE);
     }
 
     function test_buy_non_seized_nft() external {
@@ -79,7 +113,7 @@ contract HarbergerTest is ERC721Test {
 
         // act & assert
         vm.expectRevert(Errors.BuyingNonSeizedNFT.selector);
-        _erc721Harberger.buy(0);
+        _erc721Harberger.buy(0, Constants.MIN_NFT_PRICE);
     }
 
     function test_buy_insufficient_fund() external { }

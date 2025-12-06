@@ -33,7 +33,7 @@ interface IERC721Harberger {
     // Refunds excess payment back to buyer
     // Price of the NFT should remain unchanged after buying it
     // Refunds taxes paid by the previous owner if any to prevent griefing
-    function buy(uint256 aTokenId) external;
+    function buy(uint256 aTokenId, uint256 aMaxPriceIncludingTaxes) external;
 
     // Mints the NFT to the caller.
     // Caller has to pay taxes on the declared value of the NFT

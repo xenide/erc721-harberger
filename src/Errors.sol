@@ -10,4 +10,6 @@ contract Errors {
     error NFTNotDelinquent(uint256 taxEpochEnd, uint256 currentTimestamp);
     error NFTAlreadySeized();
     error BuyingNonSeizedNFT();
+
+    error MaxPriceIncludingTaxesExceeded();
 }

@@ -110,7 +110,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     }
 
     /// @inheritdoc IERC721Harberger
-    function buy(uint256 aTokenId) external {
+    function buy(uint256 aTokenId, uint256 aMaxPriceIncludingTaxes) external {
         address lPrevOwnerStorage = _ownerOf(aTokenId);
         require(msg.sender != lPrevOwnerStorage, Errors.BuyingOwnNFT());
 
@@ -151,8 +151,10 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
 
             _pullPayment(msg.sender, lTotalDue);
         }
+
         uint256 lTaxes = _calcTaxDue(lPrice);
         lTotalDue = lPrice + lTaxes;
+        require(lTotalDue <= aMaxPriceIncludingTaxes, Errors.MaxPriceIncludingTaxesExceeded());
         _pullPayment(msg.sender, lTotalDue);
 
         if (lTaxesToRefundPrevOwner > 0) {

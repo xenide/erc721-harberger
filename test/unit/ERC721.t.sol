@@ -49,6 +49,9 @@ contract ERC721Test is BaseTest {
         assertEq(_erc721Harberger.getPrice(0), lPrice1);
         assertEq(_erc721Harberger.getPrice(1), lPrice2);
         assertEq(_erc721Harberger.getPrice(2), lPrice3);
+        assertEq(_erc721Harberger.balanceOf(_alice), 1) ;
+        assertEq(_erc721Harberger.balanceOf(_bob), 1) ;
+        assertEq(_erc721Harberger.balanceOf(_cal), 1) ;
     }
 
     function test_mint_price_too_low() external {
