@@ -172,8 +172,6 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         rPrice = _taxInfo[aTokenId].price;
     }
 
-    function prepayTaxes(uint256[] calldata aTokenIds) external { }
-
     function taxEpochEnd(uint256 aTokenId) public view returns (uint256) {
         // SAFETY: Addition does not overflow for human scale times
         return _taxInfo[aTokenId].lastPaidTimestamp + TAX_EPOCH_DURATION;

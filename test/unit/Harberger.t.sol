@@ -146,7 +146,6 @@ contract HarbergerTest is ERC721Test {
         _erc721Harberger.getPrice(aTokenId);
     }
 
-
     function test_setPrice_Higher(uint256 aOriginalPrice, uint256 aNewPrice) external {
         // arrange
         test_mint(aOriginalPrice);

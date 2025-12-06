@@ -20,8 +20,6 @@ interface IERC721Harberger {
     function GRACE_PERIOD() external view returns (uint256);
     /// @notice Universal rate for all NFTs in this collection.
     function taxRate() external view returns (uint256);
-    // providing an array to enhance UX as one wallet might have many NFTs
-    function prepayTaxes(uint256[] calldata aTokenIds) external;
 
     function PAYMENT_TOKEN() external view returns (IERC20);
     // it is assumed that the decimals of the ERC20 never change
