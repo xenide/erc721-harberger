@@ -68,6 +68,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     function setPrice(uint256 aTokenId, uint256 aNewPrice) external onlyTokenOwner(aTokenId) {
+        require(aNewPrice >= Constants.MIN_NFT_PRICE, Errors.NFTPriceTooLow());
         uint256 lPrevPrice = _price[aTokenId];
 
         // If price is higher than the current, owner has to pay additional taxes till the end of the epoch
@@ -80,6 +81,8 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         }
         // If price is equal or lower, there is no refund to prevent griefing
         else { }
+
+        _price[aTokenId] = aNewPrice;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -87,6 +90,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     // _safeMint is reused from OZ's impl
+    // TODO: do I need to return the tokenId?
     function mint(uint256 aInitialPrice) external {
         require(aInitialPrice >= Constants.MIN_NFT_PRICE, Errors.NFTPriceTooLow());
         uint256 lTokenId = _tokenCounter++;
@@ -104,8 +108,8 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         uint256 lPrice = _price[aTokenId];
         // is this addition safe?
         _pullPayment(msg.sender, lPrice + _calcTaxDue(lPrice));
-        // should we refund the prev owner's taxes paid? What if there's insufficient amount in the contract? Then it will fail
-        // we can pull the taxes from the whole period first, then refund the prev owner
+        // should we refund the prev owner's taxes paid? What if there's insufficient amount in the contract? Then it
+        // will fail we can pull the taxes from the whole period first, then refund the prev owner
 
         address lPrevOwner = _update(msg.sender, aTokenId, address(0));
         assert(lPrevOwner == lPrevOwnerStorage);
