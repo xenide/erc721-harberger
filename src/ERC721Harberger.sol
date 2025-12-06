@@ -47,6 +47,12 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     //                                     MODIFIERS                                             //
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
+    modifier ensureTaxCompliance(uint256 aTokenId) {
+        require(!isDelinquent(aTokenId), Errors.NFTIsDelinquent());
+        require(!isInGracePeriod(aTokenId), Errors.NFTInGracePeriod());
+        _;
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////////
     //                                  GOVERNOR FUNCTIONS                                       //
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -83,11 +89,12 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         _updateTaxInfo(aTokenId, aNewPrice, lNewTaxAmt);
     }
 
-    function transferFrom(address aFrom, address aTo, uint256 aTokenId) public override nonReentrant {
-        require(!isDelinquent(aTokenId), Errors.NFTIsDelinquent());
-        require(!isInGracePeriod(aTokenId), Errors.NFTInGracePeriod());
-
+    function transferFrom(address aFrom, address aTo, uint256 aTokenId) public ensureTaxCompliance(aTokenId) override nonReentrant {
         ERC721.transferFrom(aFrom, aTo, aTokenId);
+    }
+
+    function safeTransferFrom(address aFrom, address aTo, uint256 aTokenId, bytes memory aData) public ensureTaxCompliance(aTokenId) override nonReentrant {
+        ERC721.safeTransferFrom(aFrom, aTo, aTokenId, aData);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
