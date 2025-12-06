@@ -75,7 +75,8 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         require(aNewPrice >= Constants.MIN_NFT_PRICE, Errors.NFTPriceTooLow());
         uint256 lNewTaxAmt = _calcTaxDue(aNewPrice);
         // subtraction will underflow if it's in the grace period, which is fine
-        uint256 lRemainingTaxCredit = _taxInfo[aTokenId].lastPaidAmt * (taxEpochEnd(aTokenId) - block.timestamp) / Constants.TAX_EPOCH_DURATION;
+        uint256 lRemainingTaxCredit =
+            _taxInfo[aTokenId].lastPaidAmt * (taxEpochEnd(aTokenId) - block.timestamp) / Constants.TAX_EPOCH_DURATION;
 
         if (lNewTaxAmt > lRemainingTaxCredit) {
             _pullPayment(msg.sender, lNewTaxAmt - lRemainingTaxCredit);

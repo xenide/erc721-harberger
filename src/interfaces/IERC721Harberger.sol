@@ -11,7 +11,6 @@ interface IERC721Harberger {
     // Owner does not pay the difference between last price and this new price, only the difference in taxes if any.
     function setPrice(uint256 aTokenId, uint256 aPrice) external;
 
-
     // Taxation
     function setTaxRate(uint256 aTaxRate) external;
 

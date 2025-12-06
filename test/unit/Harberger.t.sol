@@ -188,7 +188,7 @@ contract HarbergerTest is ERC721Test {
         _erc721Harberger.setPrice(0, Constants.MIN_NFT_PRICE);
     }
 
-    function test_setPrice_during_grace_period() external{
+    function test_setPrice_during_grace_period() external {
         // arrange
         test_mint(Constants.MIN_NFT_PRICE);
         _stepTime(Constants.TAX_EPOCH_DURATION + 10);
