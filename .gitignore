@@ -1,14 +1,40 @@
-# Compiler files
-cache/
-out/
+# Foundry
+/cache
+/out
 
-# Ignores development broadcast logs
-!/broadcast
-/broadcast/*/31337/
-/broadcast/**/dry-run/
+# Dependencies
+/node_modules
+/lib
 
-# Docs
-docs/
-
-# Dotenv file
+# Environment variables
 .env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build artifacts
+build/
+dist/
+
+# Temp files
+*.log
+*.tmp
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Editor backup files
+*.orig
+*.bak
+
+# Git
+.git/
+

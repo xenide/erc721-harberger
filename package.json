@@ -1,0 +1,27 @@
+{
+  "name": "erc721-harberger",
+  "version": "0.1.0",
+  "description": "-",
+  "homepage": "https://github.com/xenide/erc721-harberger#readme",
+  "bugs": {
+    "url": "https://github.com/xenide/erc721-harberger/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xenide/erc721-harberger.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "lint": "solhint --config src/.solhint.json 'src/**/*.sol'"
+  },
+  "dependencies": {
+    "solhint": "6.0.1"
+  }
+}
