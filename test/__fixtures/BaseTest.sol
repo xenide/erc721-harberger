@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import { ERC721Harberger, IERC20, Constants, Errors } from "../src/ERC721Harberger.sol";
+import { ERC721Harberger, IERC20, Constants, Errors } from "../../src/ERC721Harberger.sol";
 import { Test } from "forge-std/Test.sol";
-import { MintableERC20, ERC20 } from "./__fixtures/MintableERC20.sol";
+import { MintableERC20, ERC20 } from "./MintableERC20.sol";
 
 contract BaseTest is Test {
     ERC721Harberger internal _erc721Harberger;
@@ -34,8 +34,7 @@ contract BaseTest is Test {
 
     function test_PrecisionMultiplierCorrect() external {
         // arrange
-        ERC721Harberger _erc721Harberger2 =
-            new ERC721Harberger(address(this), IERC20(address(_tokenB)), address(this));
+        ERC721Harberger _erc721Harberger2 = new ERC721Harberger(address(this), IERC20(address(_tokenB)), address(this));
 
         // act
         uint256 lPrecisionMultiplier = _erc721Harberger.PAYMENT_TOKEN_PRECISION_MULTIPLIER();
@@ -106,9 +105,7 @@ contract BaseTest is Test {
         _erc721Harberger.mint(Constants.MIN_NFT_PRICE);
     }
 
-    function test_buy() external {
-
-    }
+    function test_buy() external { }
 
     function test_buy_own_nft() external {
         // arrange

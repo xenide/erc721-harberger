@@ -6,4 +6,8 @@ contract Errors {
 
     error NotTokenOwner();
     error BuyingOwnNFT();
+
+    error NFTNotDelinquent(uint256 taxEpochEnd, uint256 currentTimestamp);
+    error NFTAlreadySeized();
+    error BuyingNonSeizedNFT();
 }

@@ -17,7 +17,7 @@ interface IERC721Harberger {
     /// @notice Universal rate for all NFTs in this collection.
     function taxRate() external view returns (uint256);
     // providing an array to enhance UX as one wallet might have many NFTs
-    function payTaxes(uint256[] calldata aTokenIds) external;
+    function prepayTaxes(uint256[] calldata aTokenIds) external;
 
     function PAYMENT_TOKEN() external view returns (IERC20);
 
@@ -32,6 +32,7 @@ interface IERC721Harberger {
     // Pulls the ERC20 payment token from the caller's wallet. So caller must have approved the amount
     // Refunds excess payment back to buyer
     // Price of the NFT should remain unchanged after buying it
+    // Refunds taxes paid by the previous owner if any to prevent griefing
     function buy(uint256 aTokenId) external;
 
     // Mints the NFT to the caller.
@@ -39,8 +40,11 @@ interface IERC721Harberger {
     // Pulls payment from the caller so must already have the approval done
     function mint(uint256 aInitialPrice) external;
 
-    // Returns true if the NFT is a delinquent state (i.e. has unpaid taxes)
-    function isDelinquent(uint256 aTokenId) view external returns (bool);
+    // Returns true if the NFT is a delinquent state (i.e. has unpaid taxes) and can be seized
+    function isDelinquent(uint256 aTokenId) external view returns (bool);
+
+    // Returns true if NFT is seized (i.e. owned by the NFT contract)
+    function isSeized(uint256 aTokenId) external view returns (bool);
 
     // NFT becomes owned by the contract, ready for auction
     function seizeDelinquentNft(uint256 aTokenId) external;
