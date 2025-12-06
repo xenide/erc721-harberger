@@ -48,8 +48,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     modifier ensureTaxCompliance(uint256 aTokenId) {
-        require(!isDelinquent(aTokenId), Errors.NFTIsDelinquent());
-        require(!isInGracePeriod(aTokenId), Errors.NFTInGracePeriod());
+        _ensureTaxCompliance(aTokenId);
         _;
     }
 
@@ -238,5 +237,10 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     /// @return rTaxableAmt The amount to be taxed, in the PAYMENT_TOKEN, denominated in its native precision.
     function _calcTaxDue(uint256 aTaxableAmt) internal view returns (uint256 rTaxableAmt) {
         rTaxableAmt = Utils.calcTaxDue(aTaxableAmt, PAYMENT_TOKEN_PRECISION_MULTIPLIER, taxRate);
+    }
+
+    function _ensureTaxCompliance(uint256 aTokenId) internal {
+        require(!isDelinquent(aTokenId), Errors.NFTIsDelinquent());
+        require(!isInGracePeriod(aTokenId), Errors.NFTInGracePeriod());
     }
 }
