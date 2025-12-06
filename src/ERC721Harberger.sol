@@ -47,11 +47,6 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     //                                     MODIFIERS                                             //
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
-    modifier onlyTokenOwner(uint256 aTokenId) {
-        require(_ownerOf(aTokenId) == msg.sender, Errors.NotTokenOwner());
-        _;
-    }
-
     ///////////////////////////////////////////////////////////////////////////////////////////////
     //                                  GOVERNOR FUNCTIONS                                       //
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -70,7 +65,8 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     //                            TOKEN OWNER FUNCTIONS                                          //
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
-    function setPrice(uint256 aTokenId, uint256 aNewPrice) external onlyTokenOwner(aTokenId) nonReentrant {
+    function setPrice(uint256 aTokenId, uint256 aNewPrice) external nonReentrant {
+        require(_requireOwned(aTokenId) == msg.sender, Errors.NotTokenOwner());
         require(!isDelinquent(aTokenId), Errors.NFTIsDelinquent());
         require(aNewPrice >= Constants.MIN_NFT_PRICE, Errors.NFTPriceTooLow());
         uint256 lNewTaxAmt = _calcTaxDue(aNewPrice);
@@ -99,7 +95,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     // _safeMint is reused from OZ's impl
-    // TODO: do I need to return the tokenId?
+    // TODO: do I need to return the tokenId? milady doesn't reutrn
     function mint(uint256 aInitialPrice) external nonReentrant {
         require(aInitialPrice >= Constants.MIN_NFT_PRICE, Errors.NFTPriceTooLow());
         uint256 lTokenId = _tokenCounter++;
@@ -187,13 +183,12 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         return taxEpochEnd(aTokenId) + GRACE_PERIOD;
     }
 
-    function isDelinquent(uint256 aTokenId) public view returns (bool) {
-        // SAFETY: Addition does not overflow for human scale times
-        return block.timestamp > _gracePeriodEnd(aTokenId);
-    }
-
     function isInGracePeriod(uint256 aTokenId) public view returns (bool) {
         return block.timestamp > taxEpochEnd(aTokenId) && block.timestamp <= _gracePeriodEnd(aTokenId);
+    }
+
+    function isDelinquent(uint256 aTokenId) public view returns (bool) {
+        return block.timestamp > _gracePeriodEnd(aTokenId);
     }
 
     function isSeized(uint256 aTokenId) public view returns (bool) {

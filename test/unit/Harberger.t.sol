@@ -2,6 +2,7 @@ pragma solidity ^0.8.28;
 
 import { ERC721Test, Constants, Errors } from "./ERC721.t.sol";
 import { console } from "../../lib/forge-std/src/Test.sol";
+import { IERC721Errors } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 
 contract HarbergerTest is ERC721Test {
     function test_isDelinquent() external {
@@ -199,5 +200,24 @@ contract HarbergerTest is ERC721Test {
         vm.prank(_alice);
         vm.expectRevert();
         _erc721Harberger.setPrice(0, Constants.MIN_NFT_PRICE + 1);
+    }
+
+    function test_setPrice_NotTokenOwner() external {
+        // arrange
+        test_mint(Constants.MIN_NFT_PRICE);
+
+        // act & assert
+        vm.prank(_bob);
+        vm.expectRevert(Errors.NotTokenOwner.selector);
+        _erc721Harberger.setPrice(0, Constants.MIN_NFT_PRICE);
+    }
+
+    function test_setPrice_nonexistent_token(uint256 aTokenId) external {
+        // assume
+        vm.assume(aTokenId != 0);
+
+        // act & assert
+        vm.expectPartialRevert(IERC721Errors.ERC721NonexistentToken.selector);
+        _erc721Harberger.setPrice(aTokenId, Constants.MIN_NFT_PRICE);
     }
 }

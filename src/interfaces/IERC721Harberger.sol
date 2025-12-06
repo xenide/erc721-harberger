@@ -45,7 +45,11 @@ interface IERC721Harberger {
     // Pulls payment from the caller so must already have the approval done
     function mint(uint256 aInitialPrice) external;
 
-    // Returns true if the NFT is a delinquent state (i.e. has unpaid taxes) and can be seized
+    // Returns true if the NFT is past the tax epoch and is in the grace period
+    function isInGracePeriod(uint256 aTokenId) external view returns (bool);
+
+    // Returns true if the NFT is a delinquent state (i.e. has unpaid taxes) and
+    // past the tax epoch and the grace period, and can be seized
     function isDelinquent(uint256 aTokenId) external view returns (bool);
 
     // Returns true if NFT is seized (i.e. owned by the NFT contract)
