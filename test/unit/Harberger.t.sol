@@ -103,6 +103,7 @@ contract HarbergerTest is ERC721Test {
         // Alice got exactly the price back
         assertEq(_tokenA.balanceOf(_alice), lAliceBal + lPrice);
     }
+
     function test_buy_during_auction_period() external {
         // arrange
         test_mint(Constants.MIN_NFT_PRICE * 5);
@@ -121,7 +122,11 @@ contract HarbergerTest is ERC721Test {
         assertEq(_erc721Harberger.ownerOf(0), _bob);
         assertEq(_erc721Harberger.balanceOf(_bob), 1);
         assertEq(_erc721Harberger.getPrice(0), Constants.MIN_NFT_PRICE);
-        assertEq(_tokenA.balanceOf(_bob), lBobBal - Constants.MIN_NFT_PRICE - Utils.calcTaxDue(Constants.MIN_NFT_PRICE, 1e12, _erc721Harberger.taxRate()));
+        assertEq(
+            _tokenA.balanceOf(_bob),
+            lBobBal - Constants.MIN_NFT_PRICE
+                - Utils.calcTaxDue(Constants.MIN_NFT_PRICE, 1e12, _erc721Harberger.taxRate())
+        );
         assertEq(_tokenA.balanceOf(_alice), lAliceBal);
     }
 
@@ -146,13 +151,36 @@ contract HarbergerTest is ERC721Test {
         assertEq(_tokenA.balanceOf(_alice), lAliceStartingBal);
     }
 
-    function test_buy_same_block_as_mint() external { }
+    // Someone can snipe the NFT as soon as it's minted
+    // The original should be compensated in full, price + taxes
+    function test_buy_same_block_as_mint(uint256 aMintPrice) external {
+        // arrange
+        test_mint(aMintPrice);
+        uint256 lMintPrice = _erc721Harberger.getPrice(0);
+        uint256 lAliceBal = _tokenA.balanceOf(_alice);
+        uint256 lBobBal = _tokenA.balanceOf(_bob);
 
-    function test_mint_then_lower_tax_rate_then_buy() external {
-        // if the tax rate is lowered quite a bit, we expect that
-        // the new buyer's total payment might not be able to cover the previous
-        // owner's principal + pre-paid taxes
+        // act
+        vm.startPrank(_bob);
+        _tokenA.approve(address(_erc721Harberger), type(uint256).max);
+        _erc721Harberger.buy(0, lMintPrice * 11 / 10);
+        vm.stopPrank();
+
+        // assert
+        assertEq(_erc721Harberger.ownerOf(0), _bob);
+        assertEq(_erc721Harberger.balanceOf(_bob), 1);
+        assertEq(_erc721Harberger.getPrice(0), lMintPrice);
+        assertEq(
+            _tokenA.balanceOf(_bob),
+            lBobBal - lMintPrice - Utils.calcTaxDue(lMintPrice, 1e12, _erc721Harberger.taxRate())
+        );
+        assertEq(
+            _tokenA.balanceOf(_alice),
+            lAliceBal + lMintPrice + Utils.calcTaxDue(lMintPrice, 1e12, _erc721Harberger.taxRate())
+        );
     }
+
+    function test_mint_then_lower_tax_rate_then_buy() external { }
 
     function test_buy_max_price_exceeded(uint256 aPrice) external {
         // assume
