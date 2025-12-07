@@ -24,12 +24,7 @@
     - Price stays the same unless updated (higher or lower) by the owner or decays by the reverse Dutch auction when being delinquent.
 
 4. **Tax rate**
-    - Global for simplicity.
-    - **Considerations:**
-        - Assume that it's set by a DAO/timelock.
-        - Set too high: owners will declare lower than actual value.
-        - Set too low: owners will declare higher than actual value.
-    - Proceeds of sales will go to the seller, 100%.
+    - Global for entire collection for simplicity.
 
 5. **Tax Declaration + Payment Mechanism**
     - Owners call `setPrice` as a way to re-declare the value and pay the taxes atomically.
