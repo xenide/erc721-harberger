@@ -2,6 +2,8 @@ pragma solidity ^0.8.28;
 
 contract Errors {
     error NFTPriceTooLow();
+    error NFTPriceTooHigh();
+
     error TaxRateTooHigh();
 
     error NotTokenOwner();
@@ -11,10 +13,8 @@ contract Errors {
     error NFTInGracePeriod();
 
     error NFTNotDelinquent(uint256 taxEpochEnd, uint256 currentTimestamp);
-    error NFTAlreadySeized();
-    error BuyingNonSeizedNFT();
+    //    error NFTAlreadySeized();
+    //    error BuyingNonSeizedNFT();
 
     error MaxPriceIncludingTaxesExceeded();
-
-    error PriceExceedMaxSupportedPrice();
 }

@@ -18,48 +18,6 @@ contract HarbergerTest is ERC721Test {
         assertEq(lIsDelinquent, true);
     }
 
-    function test_seize() external {
-        // arrange
-        test_mint(Constants.MIN_NFT_PRICE);
-        _stepTime(Constants.TAX_EPOCH_DURATION + Constants.GRACE_PERIOD + 1);
-
-        // act
-        _erc721Harberger.seizeDelinquentNft(0);
-
-        // assert
-        assertEq(_erc721Harberger.ownerOf(0), address(_erc721Harberger));
-        assertEq(_erc721Harberger.isSeized(0), true);
-        assertEq(_erc721Harberger.isDelinquent(0), true);
-    }
-
-    function test_seize_cannot_seize_during_tax_epoch_and_grace_period() external {
-        // arrange
-        test_mint(Constants.MIN_NFT_PRICE);
-        _stepTime(Constants.TAX_EPOCH_DURATION);
-
-        // act & assert
-        vm.expectPartialRevert(Errors.NFTNotDelinquent.selector);
-        _erc721Harberger.seizeDelinquentNft(0);
-
-        // arrange
-        _stepTime(Constants.GRACE_PERIOD);
-
-        // act & assert
-        vm.expectPartialRevert(Errors.NFTNotDelinquent.selector);
-        _erc721Harberger.seizeDelinquentNft(0);
-    }
-
-    function test_seize_already_seized_nft() external {
-        // arrange
-        test_mint(Constants.MIN_NFT_PRICE);
-        _stepTime(Constants.TAX_EPOCH_DURATION + Constants.GRACE_PERIOD + 1);
-        _erc721Harberger.seizeDelinquentNft(0);
-
-        // act & assert
-        vm.expectRevert(Errors.NFTAlreadySeized.selector);
-        _erc721Harberger.seizeDelinquentNft(0);
-    }
-
     function test_buy_during_tax_epoch(uint256 aFastForward) external {
         // assume
         uint256 lFastForward = bound(aFastForward, 1, Constants.TAX_EPOCH_DURATION - 1);
@@ -110,7 +68,6 @@ contract HarbergerTest is ERC721Test {
         _stepTime(Constants.TAX_EPOCH_DURATION * 2);
         uint256 lAliceBal = _tokenA.balanceOf(_alice);
         uint256 lBobBal = _tokenA.balanceOf(_bob);
-        _erc721Harberger.seizeDelinquentNft(0);
 
         // act
         vm.startPrank(_bob);
@@ -135,7 +92,6 @@ contract HarbergerTest is ERC721Test {
         test_mint(Constants.MIN_NFT_PRICE * 5);
         uint256 lAliceStartingBal = _tokenA.balanceOf(_alice);
         _stepTime(Constants.TAX_EPOCH_DURATION * 3);
-        _erc721Harberger.seizeDelinquentNft(0);
 
         // act
         vm.startPrank(_bob);
@@ -214,7 +170,6 @@ contract HarbergerTest is ERC721Test {
         // arrange
         test_mint(lPrice);
         _stepTime(Constants.TAX_EPOCH_DURATION + Constants.GRACE_PERIOD + 1);
-        _erc721Harberger.seizeDelinquentNft(0);
 
         // act & assert
         vm.expectRevert(Errors.MaxPriceIncludingTaxesExceeded.selector);
@@ -230,18 +185,6 @@ contract HarbergerTest is ERC721Test {
         vm.expectRevert(Errors.BuyingOwnNFT.selector);
         _erc721Harberger.buy(0, Constants.MIN_NFT_PRICE);
     }
-
-    function test_buy_non_seized_nft() external {
-        // arrange
-        test_mint(Constants.MIN_NFT_PRICE);
-        _stepTime(Constants.TAX_EPOCH_DURATION + Constants.GRACE_PERIOD + 1);
-
-        // act & assert
-        vm.expectRevert(Errors.BuyingNonSeizedNFT.selector);
-        _erc721Harberger.buy(0, Constants.MIN_NFT_PRICE);
-    }
-
-    function test_buy_insufficient_fund() external { }
 
     function test_getPrice() external {
         // arrange
@@ -322,15 +265,40 @@ contract HarbergerTest is ERC721Test {
         _erc721Harberger.setPrice(0, Constants.MIN_NFT_PRICE);
     }
 
-    function test_setPrice_during_grace_period() external {
+    function test_setPrice_same_price_during_grace_period() external {
         // arrange
+        uint256 lPenalty = Utils.calcTaxDue(Constants.MIN_NFT_PRICE, 1e12, Constants.DEFAULT_TAX_RATE)
+            * Constants.GRACE_PERIOD / Constants.TAX_EPOCH_DURATION;
         test_mint(Constants.MIN_NFT_PRICE);
-        _stepTime(Constants.TAX_EPOCH_DURATION + 10);
+        _stepTime(Constants.TAX_EPOCH_DURATION + Constants.GRACE_PERIOD - 5);
+        uint256 lAliceBal = _tokenA.balanceOf(_alice);
 
-        // act & assert
+        // act
         vm.prank(_alice);
-        vm.expectRevert();
-        _erc721Harberger.setPrice(0, Constants.MIN_NFT_PRICE + 1);
+        _erc721Harberger.setPrice(0, Constants.MIN_NFT_PRICE);
+
+        // assert
+        uint256 lCurrentEpochTax = Utils.calcTaxDue(Constants.MIN_NFT_PRICE, 1e12, Constants.DEFAULT_TAX_RATE);
+        assertEq(_tokenA.balanceOf(_alice), lAliceBal - lPenalty - lCurrentEpochTax);
+    }
+
+    function test_setPrice_lower_price_during_grace_period() external {
+        // arrange
+        uint256 lInitialPrice = Constants.MIN_NFT_PRICE * 10;
+        uint256 lPenalty = Utils.calcTaxDue(lInitialPrice, 1e12, Constants.DEFAULT_TAX_RATE)
+            * Constants.GRACE_PERIOD / Constants.TAX_EPOCH_DURATION;
+        test_mint(lInitialPrice);
+        _stepTime(Constants.TAX_EPOCH_DURATION + Constants.GRACE_PERIOD - 5);
+        uint256 lAliceBal = _tokenA.balanceOf(_alice);
+
+        // act
+        vm.prank(_alice);
+        // set price 90% lower
+        _erc721Harberger.setPrice(0, Constants.MIN_NFT_PRICE);
+
+        // assert
+        uint256 lCurrentEpochTax = Utils.calcTaxDue(Constants.MIN_NFT_PRICE, 1e12, Constants.DEFAULT_TAX_RATE);
+        assertEq(_tokenA.balanceOf(_alice), lAliceBal - lPenalty - lCurrentEpochTax);
     }
 
     function test_setPrice_NotTokenOwner() external {

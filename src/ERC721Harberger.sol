@@ -74,16 +74,30 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         require(_requireOwned(aTokenId) == msg.sender, Errors.NotTokenOwner());
         require(!isDelinquent(aTokenId), Errors.NFTIsDelinquent());
         require(aNewPrice >= Constants.MIN_NFT_PRICE, Errors.NFTPriceTooLow());
-        require(aNewPrice <= Constants.MAX_SUPPORTED_PRICE, Errors.PriceExceedMaxSupportedPrice());
-        uint256 lNewTaxAmt = _calcTaxDue(aNewPrice);
-        // subtraction will underflow if it's in the grace period, which is fine
-        uint256 lRemainingTaxCredit =
-            _taxInfo[aTokenId].lastPaidAmt * (taxEpochEnd(aTokenId) - block.timestamp) / Constants.TAX_EPOCH_DURATION;
+        require(aNewPrice <= Constants.MAX_SUPPORTED_PRICE, Errors.NFTPriceTooHigh());
 
-        if (lNewTaxAmt > lRemainingTaxCredit) {
-            _pull(msg.sender, lNewTaxAmt - lRemainingTaxCredit);
+        uint256 lRemainingTaxCredit;
+        uint256 lGracePeriodPenalty;
+        // happy case: NFT is in a tax compliant state, and not in a grace period state
+        if (!isInGracePeriod(aTokenId)) {
+            lRemainingTaxCredit = _taxInfo[aTokenId].lastPaidAmt * (taxEpochEnd(aTokenId) - block.timestamp)
+                / Constants.TAX_EPOCH_DURATION;
+        } else {
+            // During the grace period, the owner necessarily has no remaining tax credits and has has to pay a
+            // penalty which is fixed at the fraction `GRACE_PERIOD / TAX_EPOCH_DURATION` of the previous declared price
+            // regardless if he pays at the beginning or the end of the grace period. This is not recorded to
+            // taxInfo.lastPaidAmt as that will affect the reimbursement calculations.
+            // It's important that we use the old price instead of the new declared price, as the owner can
+            // set a low price during the grace period, and get away with paying lower taxes for this period,
+            // effectively "squatting" during the grace period.
+            lGracePeriodPenalty = _calcTaxDue(_taxInfo[aTokenId].price) * GRACE_PERIOD / TAX_EPOCH_DURATION;
         }
-        // if there's a surplus remaining tax credit, the owner forfeits it
+
+        uint256 lNewTaxAmt = _calcTaxDue(aNewPrice);
+        if (lNewTaxAmt + lGracePeriodPenalty > lRemainingTaxCredit) {
+            _pull(msg.sender, lNewTaxAmt + lGracePeriodPenalty - lRemainingTaxCredit);
+        }
+        // if there's a surplus remaining tax credit exceeding the new tax amt, the owner forfeits it
         else { }
 
         _updateTaxInfo(aTokenId, aNewPrice, lNewTaxAmt);
@@ -115,7 +129,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     // impl a max price? so that things won't overflow?
     function mint(uint256 aInitialPrice) external nonReentrant {
         require(aInitialPrice >= Constants.MIN_NFT_PRICE, Errors.NFTPriceTooLow());
-        require(aInitialPrice <= Constants.MAX_SUPPORTED_PRICE, Errors.PriceExceedMaxSupportedPrice());
+        require(aInitialPrice <= Constants.MAX_SUPPORTED_PRICE, Errors.NFTPriceTooHigh());
         uint256 lTokenId = _tokenCounter++;
         uint256 lTaxDue = _calcTaxDue(aInitialPrice);
         uint256 lTotalDue = aInitialPrice + lTaxDue;
@@ -155,7 +169,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         }
         // Case 2: Buy during the reverse dutch auction period, price decays to minimum
         else if (block.timestamp < lAuctionPeriodEnd) {
-            require(isSeized(aTokenId), Errors.BuyingNonSeizedNFT());
+            // require(isSeized(aTokenId), Errors.BuyingNonSeizedNFT());
 
             // reverse dutch auction from end of grace period to end of auction
             // with prices slowing decaying to the minimum price
@@ -165,7 +179,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         }
         // Case 3: Beyond the auction period, buyer pays minimum price
         else {
-            require(isSeized(aTokenId), Errors.BuyingNonSeizedNFT());
+            // require(isSeized(aTokenId), Errors.BuyingNonSeizedNFT());
             lPrice = Constants.MIN_NFT_PRICE;
         }
 
@@ -206,18 +220,18 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         return block.timestamp > _gracePeriodEnd(aTokenId);
     }
 
-    function isSeized(uint256 aTokenId) public view returns (bool) {
-        return _ownerOf(aTokenId) == address(this);
-    }
-
-    function seizeDelinquentNft(uint256 aTokenId) external nonReentrant {
-        require(isDelinquent(aTokenId), Errors.NFTNotDelinquent(_gracePeriodEnd(aTokenId), block.timestamp));
-        require(!isSeized(aTokenId), Errors.NFTAlreadySeized());
-
-        address lPrevOwner = _update(address(this), aTokenId, address(0));
-
-        emit NFTSeized(lPrevOwner, address(this), aTokenId);
-    }
+    //    function isSeized(uint256 aTokenId) public view returns (bool) {
+    //        return _ownerOf(aTokenId) == address(this);
+    //    }
+    //
+    //    function seizeDelinquentNft(uint256 aTokenId) external nonReentrant {
+    //        require(isDelinquent(aTokenId), Errors.NFTNotDelinquent(_gracePeriodEnd(aTokenId), block.timestamp));
+    //        require(!isSeized(aTokenId), Errors.NFTAlreadySeized());
+    //
+    //        address lPrevOwner = _update(address(this), aTokenId, address(0));
+    //
+    //        emit NFTSeized(lPrevOwner, address(this), aTokenId);
+    //    }
 
     function sweepTaxesToDao() external nonReentrant {
         if (feeReceiver != address(0)) {

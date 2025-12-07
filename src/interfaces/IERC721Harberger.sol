@@ -52,8 +52,7 @@ interface IERC721Harberger {
     function isDelinquent(uint256 aTokenId) external view returns (bool);
 
     // Returns true if NFT is seized (i.e. owned by the NFT contract)
-    function isSeized(uint256 aTokenId) external view returns (bool);
-
+    // function isSeized(uint256 aTokenId) external view returns (bool);
     // NFT becomes owned by the contract, ready for auction
-    function seizeDelinquentNft(uint256 aTokenId) external;
+    // function seizeDelinquentNft(uint256 aTokenId) external;
 }
