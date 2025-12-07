@@ -5,7 +5,8 @@ import { IERC20 } from "../../lib/openzeppelin-contracts/contracts/token/ERC20/u
 
 /// @title IERC721Harberger
 /// @notice ERC721 with Harberger tax mechanism for self-assessed NFT valuation
-/// @dev Implements a harberger tax system where owners declare prices and pay periodic taxes, with forced sales for delinquent NFTs
+/// @dev Implements a harberger tax system where owners declare prices and pay periodic taxes, with forced sales for
+/// delinquent NFTs
 interface IERC721Harberger {
     ///////////////////////////////////////////////////////////////////////////////////////////////
     //                                   PRICING FUNCTIONS                                       //
