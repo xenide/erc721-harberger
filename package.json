@@ -19,7 +19,9 @@
     "test": "test"
   },
   "scripts": {
-    "lint": "solhint --config src/.solhint.json 'src/**/*.sol'"
+    "lint": "solhint --config src/.solhint.json 'src/**/*.sol'",
+    "coverage": "forge coverage --report summary --report lcov",
+    "coverage:report": "forge coverage --report summary --report lcov --report-file lcov.info"
   },
   "dependencies": {
     "solhint": "6.0.1"

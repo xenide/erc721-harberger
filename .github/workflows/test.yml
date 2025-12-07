@@ -40,6 +40,17 @@ jobs:
       - name: Run Forge snapshot
         run: forge snapshot --snap snapshots/.gas-snapshot
 
+      - name: Generate coverage report
+        run: forge coverage --report summary --report lcov
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./lcov.info
+          flags: solidity
+          name: Solidity Coverage
+          fail_ci_if_error: false
+
       - name: Check gas snapshots
         if: ${{ false }} # Skip for now
         uses: Rubilmax/foundry-gas-diff@v3

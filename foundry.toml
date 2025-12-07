@@ -14,10 +14,13 @@ invariant_runs = 256
 [profile.ci.fuzz]
 runs = 10_000
 
+[profile.coverage]
+optimizer = false
+via_ir = false
+
 [fmt]
 line_length = 120
 wrap_comments = true
 number_underscores = "thousands"
 bracket_spacing = true
 int_types = "long"
-
