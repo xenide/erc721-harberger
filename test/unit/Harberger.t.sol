@@ -180,7 +180,32 @@ contract HarbergerTest is ERC721Test {
         );
     }
 
-    function test_mint_then_lower_tax_rate_then_buy() external { }
+    function test_mint_then_lower_tax_rate_then_buy(uint256 aNewLowerTaxRate, uint256 aFastFoward) external {
+        // assume
+        uint256 lFastForward = bound(aFastFoward, 1, Constants.TAX_EPOCH_DURATION - 1);
+        uint256 lNewLowerTaxRate = bound(aNewLowerTaxRate, 0, _erc721Harberger.taxRate() - 1);
+
+        // arrange
+        uint256 lAliceStartingAmt = _tokenA.balanceOf(_alice);
+        uint256 lMintPrice = Constants.MIN_NFT_PRICE * 100;
+        test_mint(lMintPrice);
+
+        _stepTime(lFastForward);
+        _erc721Harberger.setTaxRate(lNewLowerTaxRate);
+
+        // act
+        vm.startPrank(_bob);
+        _tokenA.approve(address(_erc721Harberger), type(uint256).max);
+        _erc721Harberger.buy(0, lMintPrice * 11 / 10);
+        vm.stopPrank();
+
+        // assert
+        assertEq(_erc721Harberger.ownerOf(0), _bob);
+        assertEq(_erc721Harberger.balanceOf(_bob), 1);
+        assertEq(_erc721Harberger.getPrice(0), lMintPrice);
+        // Alice would have lost out a little
+        assertLt(_tokenA.balanceOf(_alice), lAliceStartingAmt);
+    }
 
     function test_buy_max_price_exceeded(uint256 aPrice) external {
         // assume
@@ -236,9 +261,9 @@ contract HarbergerTest is ERC721Test {
         _erc721Harberger.getPrice(aTokenId);
     }
 
-    function test_setPrice_Higher(uint256 aOriginalPrice, uint256 aNewPrice) external {
+    function test_setPrice_Higher(uint256 aNewPrice) external {
         // arrange
-        test_mint(aOriginalPrice);
+        test_mint(Constants.MIN_NFT_PRICE * 2);
         _stepTime(Constants.TAX_EPOCH_DURATION / 2);
         uint256 lOriginalPrice = _erc721Harberger.getPrice(0);
         uint256 lAliceBal = _tokenA.balanceOf(_alice);
@@ -248,8 +273,6 @@ contract HarbergerTest is ERC721Test {
         uint256 lNewPrice = bound(aNewPrice, lOriginalPrice + 1, _tokenA.balanceOf(_alice) * 8 / 10);
 
         // act
-        console.log(_tokenA.balanceOf(_alice));
-        console.log(_tokenA.allowance(_alice, address(_erc721Harberger)));
         vm.prank(_alice);
         _erc721Harberger.setPrice(0, lNewPrice);
 

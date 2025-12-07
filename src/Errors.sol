@@ -15,4 +15,6 @@ contract Errors {
     error BuyingNonSeizedNFT();
 
     error MaxPriceIncludingTaxesExceeded();
+
+    error PriceExceedMaxSupportedPrice();
 }

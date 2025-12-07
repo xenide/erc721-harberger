@@ -74,6 +74,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         require(_requireOwned(aTokenId) == msg.sender, Errors.NotTokenOwner());
         require(!isDelinquent(aTokenId), Errors.NFTIsDelinquent());
         require(aNewPrice >= Constants.MIN_NFT_PRICE, Errors.NFTPriceTooLow());
+        require(aNewPrice <= Constants.MAX_SUPPORTED_PRICE, Errors.PriceExceedMaxSupportedPrice());
         uint256 lNewTaxAmt = _calcTaxDue(aNewPrice);
         // subtraction will underflow if it's in the grace period, which is fine
         uint256 lRemainingTaxCredit =
@@ -111,22 +112,23 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     // _safeMint is reused from OZ's impl
-    // TODO: do I need to return the tokenId? milady doesn't return it. Neither does BAYC
+    // impl a max price? so that things won't overflow?
     function mint(uint256 aInitialPrice) external nonReentrant {
         require(aInitialPrice >= Constants.MIN_NFT_PRICE, Errors.NFTPriceTooLow());
+        require(aInitialPrice <= Constants.MAX_SUPPORTED_PRICE, Errors.PriceExceedMaxSupportedPrice());
         uint256 lTokenId = _tokenCounter++;
         uint256 lTaxDue = _calcTaxDue(aInitialPrice);
+        uint256 lTotalDue = aInitialPrice + lTaxDue;
         _updateTaxInfo(lTokenId, aInitialPrice, lTaxDue);
 
         _safeMint(msg.sender, lTokenId);
-        _pull(msg.sender, lTaxDue);
+        _pull(msg.sender, lTotalDue);
         emit NFTMinted(msg.sender, lTokenId);
     }
 
     /// @inheritdoc IERC721Harberger
     function buy(uint256 aTokenId, uint256 aMaxPriceIncludingTaxes) external nonReentrant {
-        _requireOwned(aTokenId);
-        address lPrevOwnerStorage = _ownerOf(aTokenId);
+        address lPrevOwnerStorage = _requireOwned(aTokenId);
         require(msg.sender != lPrevOwnerStorage, Errors.BuyingOwnNFT());
 
         TaxInfo storage lInfo = _taxInfo[aTokenId];
@@ -171,18 +173,11 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         lTotalDue = lPrice + lTaxes;
         require(lTotalDue <= aMaxPriceIncludingTaxes, Errors.MaxPriceIncludingTaxesExceeded());
         _pull(msg.sender, lTotalDue);
-
-        // invariant: when buying at the listed price,
-        // unless, the DAO decreased the tax rate after the last owner purchased it
-        // TODO: handle this case
-        // we'll just see if the contract has enough tokens, then payout from there. Else just the max
-        assert(lTotalDue >= lTotalRefundPrevOwner);
+        _updateTaxInfo(aTokenId, lPrice, lTaxes);
 
         if (lTotalRefundPrevOwner > 0) {
             _refund(lPrevOwnerStorage, lTotalRefundPrevOwner);
         }
-
-        _updateTaxInfo(aTokenId, lPrice, lTaxes);
         address lPrevOwner = _update(msg.sender, aTokenId, address(0));
         assert(lPrevOwner == lPrevOwnerStorage);
         emit NFTBought(lPrevOwnerStorage, msg.sender, aTokenId, lPrice);
@@ -239,7 +234,18 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     }
 
     function _refund(address aTo, uint256 aAmount) internal {
-        PAYMENT_TOKEN.safeTransfer(aTo, aAmount);
+        // Usually the new revenue coming in from the buyer is enough to cover the previous owner's price + tax paid.
+        // However there is an edge case where the governor lowers the tax rate in the middle of some token's tax epoch
+        // and subsequently the NFT is bought (at a lower tax rate). This can result in the revenue collected from the
+        // new buyer being lower than the previous owner's price + tax paid.
+        // In this case, if the contract has sufficient tokens, we just refund the previous owner in full anyway.
+        // If the contract doesn't have enough, we refund whatever the contract has.
+        // The previous owner's loss is capped at taxes paid for the epoch.
+        if (aAmount > PAYMENT_TOKEN.balanceOf(address(this))) {
+            PAYMENT_TOKEN.safeTransfer(aTo, PAYMENT_TOKEN.balanceOf(address(this)));
+        } else {
+            PAYMENT_TOKEN.safeTransfer(aTo, aAmount);
+        }
     }
 
     function _updateTaxInfo(uint256 aTokenId, uint256 aPrice, uint256 aTaxPaid) internal {
@@ -254,7 +260,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         rTaxableAmt = Utils.calcTaxDue(aTaxableAmt, PAYMENT_TOKEN_PRECISION_MULTIPLIER, taxRate);
     }
 
-    function _ensureTaxCompliance(uint256 aTokenId) internal {
+    function _ensureTaxCompliance(uint256 aTokenId) internal view {
         require(!isDelinquent(aTokenId), Errors.NFTIsDelinquent());
         require(!isInGracePeriod(aTokenId), Errors.NFTInGracePeriod());
     }

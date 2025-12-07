@@ -10,4 +10,6 @@ library Constants {
     uint256 public constant MAX_TAX_RATE = 0.2e18; // 20%
 
     uint256 public constant MIN_NFT_PRICE = 1e6;
+
+    uint256 public constant MAX_SUPPORTED_PRICE = type(uint128).max;
 }

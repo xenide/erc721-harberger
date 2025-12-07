@@ -20,23 +20,23 @@ contract ERC721Test is BaseTest {
 
     function test_mint_multiple(uint256 aPrice1, uint256 aPrice2, uint256 aPrice3) external {
         // assume
-        uint256 lPrice1 = bound(aPrice1, Constants.MIN_NFT_PRICE, _tokenA.balanceOf(_alice));
-        uint256 lPrice2 = bound(aPrice2, Constants.MIN_NFT_PRICE, _tokenA.balanceOf(_bob));
-        uint256 lPrice3 = bound(aPrice3, Constants.MIN_NFT_PRICE, _tokenA.balanceOf(_cal));
+        uint256 lPrice1 = bound(aPrice1, Constants.MIN_NFT_PRICE, _tokenA.balanceOf(_alice) / 2);
+        uint256 lPrice2 = bound(aPrice2, Constants.MIN_NFT_PRICE, _tokenA.balanceOf(_bob) / 2);
+        uint256 lPrice3 = bound(aPrice3, Constants.MIN_NFT_PRICE, _tokenA.balanceOf(_cal) / 2);
 
         // act
         vm.startPrank(_alice);
-        _tokenA.approve(address(_erc721Harberger), lPrice1);
+        _tokenA.approve(address(_erc721Harberger), type(uint256).max);
         _erc721Harberger.mint(lPrice1);
         vm.stopPrank();
 
         vm.startPrank(_bob);
-        _tokenA.approve(address(_erc721Harberger), lPrice2);
+        _tokenA.approve(address(_erc721Harberger), type(uint256).max);
         _erc721Harberger.mint(lPrice2);
         vm.stopPrank();
 
         vm.startPrank(_cal);
-        _tokenA.approve(address(_erc721Harberger), lPrice3);
+        _tokenA.approve(address(_erc721Harberger), type(uint256).max);
         _erc721Harberger.mint(lPrice3);
         vm.stopPrank();
 
