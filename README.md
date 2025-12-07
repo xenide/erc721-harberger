@@ -2,7 +2,7 @@
 
 ## Documentation
 
-- 
+See [docs/design-note.md](docs/design-note.md) for design considerations.
 
 ## Usage
 
