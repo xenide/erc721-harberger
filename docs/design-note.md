@@ -74,6 +74,7 @@
 3. Storage efficient `TaxInfo` struct.
     - uint112, uint112, uint32 for timestamp, good till year 2106
     - didn't implement due to time constraints
+4. via-ir compilation for gas savings + smaller contract size.
 
 ## Assumptions
 
