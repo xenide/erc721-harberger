@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 import { ERC721Test, Constants, Errors } from "./ERC721.t.sol";
 import { console } from "../../lib/forge-std/src/Test.sol";
 import { IERC721Errors } from "../../lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
+import { Utils } from "../../src/libraries/Utils.sol";
 
 contract HarbergerTest is ERC721Test {
     function test_isDelinquent() external {
@@ -59,13 +60,50 @@ contract HarbergerTest is ERC721Test {
         _erc721Harberger.seizeDelinquentNft(0);
     }
 
-    function test_buy_during_tax_epoch() external {
+    function test_buy_during_tax_epoch(uint256 aFastForward) external {
+        // assume
+        uint256 lFastForward = bound(aFastForward, 1, Constants.TAX_EPOCH_DURATION - 1);
+
+        // arrange
+        uint256 lPrice = Constants.MIN_NFT_PRICE * 2;
+        test_mint(lPrice);
+        _stepTime(lFastForward);
+        uint256 lAliceBal = _tokenA.balanceOf(_alice);
+        uint256 lContractBal = _tokenA.balanceOf(address(_erc721Harberger));
+
+        // act
+        vm.startPrank(_bob);
+        _tokenA.approve(address(_erc721Harberger), type(uint256).max);
+        _erc721Harberger.buy(0, lPrice * 3 / 2);
 
         // assert
-        // check that taxes refunded + owner is paid the exact price
+        assertEq(_erc721Harberger.ownerOf(0), _bob);
+        assertEq(_erc721Harberger.balanceOf(_bob), 1);
+        assertEq(_erc721Harberger.getPrice(0), lPrice);
+        assertGt(_tokenA.balanceOf(_alice), lAliceBal);
     }
+
     function test_buy_during_grace_period() external {
-        // check that taxes not refunded but owner is paid the exact price
+        // arrange
+        uint256 lPrice = Constants.MIN_NFT_PRICE * 2;
+        test_mint(lPrice);
+        _stepTime(Constants.TAX_EPOCH_DURATION + Constants.GRACE_PERIOD);
+        uint256 lAliceBal = _tokenA.balanceOf(_alice);
+        uint256 lBobBal = _tokenA.balanceOf(_bob);
+        uint256 lContractBal = _tokenA.balanceOf(address(_erc721Harberger));
+
+        // act
+        vm.startPrank(_bob);
+        _tokenA.approve(address(_erc721Harberger), type(uint256).max);
+        _erc721Harberger.buy(0, lPrice * 3 / 2);
+
+        // assert
+        assertEq(_erc721Harberger.ownerOf(0), _bob);
+        assertEq(_erc721Harberger.balanceOf(_bob), 1);
+        assertEq(_erc721Harberger.getPrice(0), lPrice);
+        assertEq(_tokenA.balanceOf(_bob), lBobBal - lPrice - Utils.calcTaxDue(lPrice, 1e12, _erc721Harberger.taxRate()));
+        // Alice got exactly the price back
+        assertEq(_tokenA.balanceOf(_alice), lAliceBal + lPrice);
     }
     function test_buy_during_auction_period() external {
         // check taxes not refunded to prev owner + contract gets the price

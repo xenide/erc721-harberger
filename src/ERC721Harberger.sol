@@ -140,7 +140,6 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         if (block.timestamp <= _gracePeriodEnd(aTokenId)) {
             lPrice = lInfo.price;
 
-            uint256 lTotalRefundPrevOwner;
             if (block.timestamp <= taxEpochEnd(aTokenId)) {
                 uint256 lPrevTaxCredit = _taxInfo[aTokenId].lastPaidAmt * (taxEpochEnd(aTokenId) - block.timestamp)
                     / Constants.TAX_EPOCH_DURATION;
