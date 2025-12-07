@@ -2,6 +2,11 @@
 /cache
 /out
 
+# Coverage reports
+lcov.info
+coverage/
+.coverage
+
 # Dependencies
 /node_modules
 /lib

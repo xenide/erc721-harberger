@@ -9,7 +9,13 @@ The CI workflow (`.github/workflows/test.yml`) performs the following checks:
 1. **Format Check** - Verifies code follows the project's formatting standards using `forge fmt --check`
 2. **Build** - Compiles the smart contracts with `forge build --sizes` to check for build errors
 3. **Tests** - Runs all tests with `forge test -vvv` in verbose mode
-4. **Gas Snapshots** - Generates gas usage snapshots and compares them against the baseline
+4. **Coverage** - Generates code coverage reports and uploads to Codecov
+5. **Gas Snapshots** - Generates gas usage snapshots and compares them against the baseline
+
+A dedicated **Coverage Workflow** (`.github/workflows/coverage.yml`) also runs to:
+- Generate detailed coverage reports with optimized settings
+- Upload coverage data to Codecov
+- Display coverage summary in GitHub Actions
 
 ## Local Setup
 
@@ -28,6 +34,23 @@ forge fmt
 ```bash
 forge test -vvv
 ```
+
+### Coverage
+```bash
+# Generate coverage report
+npm run coverage
+
+# Generate coverage with detailed report file
+npm run coverage:report
+
+# View coverage excluding tests
+forge coverage --report summary --exclude-tests
+
+# Generate LCOV format for IDE integration
+forge coverage --report lcov
+```
+
+For more details on coverage analysis, see [COVERAGE.md](./COVERAGE.md).
 
 ### Gas Snapshots
 ```bash
