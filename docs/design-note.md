@@ -71,6 +71,9 @@
 1. Introduce `setPrices` that accepts an array to allow batch management of NFTs.
 2. Solution to the tax rate decrease edge case:
     - Ramping for effective rate.
+3. Storage efficient `TaxInfo` struct.
+    - uint112, uint112, uint32 for timestamp, good till year 2106
+    - didn't implement due to time constraints
 
 ## Assumptions
 
