@@ -92,6 +92,14 @@ contract HarbergerTest is ERC721Test {
         assertEq(_tokenA.balanceOf(_alice), lAliceStartingBal);
     }
 
+    function test_buy_same_block_as_mint() external { }
+
+    function test_mint_then_lower_tax_rate_then_buy() external {
+        // if the tax rate is lowered quite a bit, we expect that
+        // the new buyer's total payment might not be able to cover the previous
+        // owner's principal + pre-paid taxes
+    }
+
     function test_buy_max_price_exceeded(uint256 aPrice) external {
         // assume
         uint256 lPrice = bound(aPrice, Constants.MIN_NFT_PRICE + 1, _tokenA.balanceOf(_alice) / 2);
