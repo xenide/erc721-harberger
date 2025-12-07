@@ -172,8 +172,6 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         }
         // Case 2: Buy during the reverse dutch auction period, price decays to minimum
         else if (block.timestamp < lAuctionPeriodEnd) {
-            // require(isSeized(aTokenId), Errors.BuyingNonSeizedNFT());
-
             // reverse dutch auction from end of grace period to end of auction
             // with prices slowing decaying to the minimum price
             lPrice = lInfo.price.fullMulDiv(lAuctionPeriodEnd - block.timestamp, Constants.TAX_EPOCH_DURATION)
@@ -182,7 +180,6 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         }
         // Case 3: Beyond the auction period, buyer pays minimum price
         else {
-            // require(isSeized(aTokenId), Errors.BuyingNonSeizedNFT());
             lPrice = Constants.MIN_NFT_PRICE;
         }
 
