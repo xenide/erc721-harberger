@@ -285,8 +285,8 @@ contract HarbergerTest is ERC721Test {
     function test_setPrice_lower_price_during_grace_period() external {
         // arrange
         uint256 lInitialPrice = Constants.MIN_NFT_PRICE * 10;
-        uint256 lPenalty = Utils.calcTaxDue(lInitialPrice, 1e12, Constants.DEFAULT_TAX_RATE)
-            * Constants.GRACE_PERIOD / Constants.TAX_EPOCH_DURATION;
+        uint256 lPenalty = Utils.calcTaxDue(lInitialPrice, 1e12, Constants.DEFAULT_TAX_RATE) * Constants.GRACE_PERIOD
+            / Constants.TAX_EPOCH_DURATION;
         test_mint(lInitialPrice);
         _stepTime(Constants.TAX_EPOCH_DURATION + Constants.GRACE_PERIOD - 5);
         uint256 lAliceBal = _tokenA.balanceOf(_alice);
