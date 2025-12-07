@@ -56,6 +56,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     //                                  GOVERNOR FUNCTIONS                                       //
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
+    /// @inheritdoc IERC721Harberger
     function setTaxRate(uint256 aTaxRate) external onlyOwner {
         require(aTaxRate <= Constants.MAX_TAX_RATE, Errors.TaxRateTooHigh());
         taxRate = aTaxRate;
@@ -70,6 +71,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     //                            TOKEN OWNER FUNCTIONS                                          //
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
+    /// @inheritdoc IERC721Harberger
     function setPrice(uint256 aTokenId, uint256 aNewPrice) external nonReentrant {
         require(_requireOwned(aTokenId) == msg.sender, Errors.NotTokenOwner());
         require(!isDelinquent(aTokenId), Errors.NFTIsDelinquent());
@@ -103,6 +105,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         _updateTaxInfo(aTokenId, aNewPrice, lNewTaxAmt);
     }
 
+    /// @inheritdoc IERC721
     function transferFrom(address aFrom, address aTo, uint256 aTokenId)
         public
         override
@@ -112,6 +115,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         ERC721.transferFrom(aFrom, aTo, aTokenId);
     }
 
+    /// @inheritdoc IERC721
     function safeTransferFrom(address aFrom, address aTo, uint256 aTokenId, bytes memory aData)
         public
         override
@@ -125,8 +129,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     //                                    PUBLIC FUNCTIONS                                       //
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
-    // _safeMint is reused from OZ's impl
-    // impl a max price? so that things won't overflow?
+    /// @inheritdoc IERC721Harberger
     function mint(uint256 aInitialPrice) external nonReentrant {
         require(aInitialPrice >= Constants.MIN_NFT_PRICE, Errors.NFTPriceTooLow());
         require(aInitialPrice <= Constants.MAX_SUPPORTED_PRICE, Errors.NFTPriceTooHigh());
@@ -197,12 +200,15 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         emit NFTBought(lPrevOwnerStorage, msg.sender, aTokenId, lPrice);
     }
 
+    /// @inheritdoc IERC721Harberger
     function getPrice(uint256 aTokenId) external view returns (uint256 rPrice) {
         _requireOwned(aTokenId);
         rPrice = _taxInfo[aTokenId].price;
     }
 
+    /// @inheritdoc IERC721Harberger
     function taxEpochEnd(uint256 aTokenId) public view returns (uint256) {
+        _requireOwned(aTokenId);
         // SAFETY: Addition does not overflow for human scale times
         return _taxInfo[aTokenId].lastPaidTimestamp + TAX_EPOCH_DURATION;
     }
@@ -212,27 +218,19 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         return taxEpochEnd(aTokenId) + GRACE_PERIOD;
     }
 
+    /// @inheritdoc IERC721Harberger
     function isInGracePeriod(uint256 aTokenId) public view returns (bool) {
+        _requireOwned(aTokenId);
         return block.timestamp > taxEpochEnd(aTokenId) && block.timestamp <= _gracePeriodEnd(aTokenId);
     }
 
+    /// @inheritdoc IERC721Harberger
     function isDelinquent(uint256 aTokenId) public view returns (bool) {
+        _requireOwned(aTokenId);
         return block.timestamp > _gracePeriodEnd(aTokenId);
     }
 
-    //    function isSeized(uint256 aTokenId) public view returns (bool) {
-    //        return _ownerOf(aTokenId) == address(this);
-    //    }
-    //
-    //    function seizeDelinquentNft(uint256 aTokenId) external nonReentrant {
-    //        require(isDelinquent(aTokenId), Errors.NFTNotDelinquent(_gracePeriodEnd(aTokenId), block.timestamp));
-    //        require(!isSeized(aTokenId), Errors.NFTAlreadySeized());
-    //
-    //        address lPrevOwner = _update(address(this), aTokenId, address(0));
-    //
-    //        emit NFTSeized(lPrevOwner, address(this), aTokenId);
-    //    }
-
+    /// @inheritdoc IERC721Harberger
     function sweepTaxesToDao() external nonReentrant {
         if (feeReceiver != address(0)) {
             PAYMENT_TOKEN.safeTransfer(feeReceiver, PAYMENT_TOKEN.balanceOf(address(this)));

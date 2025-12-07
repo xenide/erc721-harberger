@@ -36,7 +36,9 @@
     - To the creator of the contract, this is an elegant solution combining the two activities which are semantically linked anyway.
         - This mirrors the fashion it is done for RWA, where the declaration and payment are done simultaneously.
     - Owners can always renew taxes at any point before the expiry, and the previous effective tax credits will roll over when declared at the same price.
-    - If the new value is lower...
+    - If the new declared value is a lower than the previous declared value and very close in time to the previous declared value, the owner may lose some tax credits.
+      - this is to prevent griefing 
+    - This will lead to  the phenomenon that any price increases will be reflected immediately by the owners (as they don't lose any tax credit), while price decreases will happen closer to the end of the tax epoch so as not to lose any tax credit.  
 
 6. **Grace Period for Non-Payment**
     - We define a grace period (default set to 1 day) beyond the end of the tax epoch.
@@ -66,7 +68,7 @@
         - `transferFrom`
         - `safeTransferFrom`
     - **Internal ERC721 Functions Explicitly Used in Code:**
-        - `_mint`
+        - `_safeMint`
         - `_update`
 
 ## Potential Improvements
