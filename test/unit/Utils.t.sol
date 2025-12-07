@@ -4,7 +4,7 @@ import { Test } from "forge-std/Test.sol";
 import { Utils } from "../../src/libraries/Utils.sol";
 
 contract UtilsTest is Test {
-    function test_calcTaxDue() public {
+    function test_calcTaxDue() public pure {
         // arrange
         uint256 lPrice = 1e18;
         uint256 lTaxRate = 0.01e18;
@@ -16,7 +16,7 @@ contract UtilsTest is Test {
         assertEq(lTaxDue, 1e16 + 1);
     }
 
-    function test_calcTaxDue_small_amt() public {
+    function test_calcTaxDue_small_amt() public pure {
         // arrange
         uint256 lPrice = 1e2;
         uint256 lTaxRate = 0.01e18;
@@ -28,7 +28,7 @@ contract UtilsTest is Test {
         assertEq(lTaxDue, 2);
     }
 
-    function test_calcTaxDue_different_multiplier() public {
+    function test_calcTaxDue_different_multiplier() public pure {
         uint256 lPrice = 1e4;
         uint256 lTaxRate = 0.01e18;
         uint256 lPrecisionMultiplier = 1e14;

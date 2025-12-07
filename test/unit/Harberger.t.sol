@@ -69,7 +69,6 @@ contract HarbergerTest is ERC721Test {
         test_mint(lPrice);
         _stepTime(lFastForward);
         uint256 lAliceBal = _tokenA.balanceOf(_alice);
-        uint256 lContractBal = _tokenA.balanceOf(address(_erc721Harberger));
 
         // act
         vm.startPrank(_bob);
@@ -90,7 +89,6 @@ contract HarbergerTest is ERC721Test {
         _stepTime(Constants.TAX_EPOCH_DURATION + Constants.GRACE_PERIOD);
         uint256 lAliceBal = _tokenA.balanceOf(_alice);
         uint256 lBobBal = _tokenA.balanceOf(_bob);
-        uint256 lContractBal = _tokenA.balanceOf(address(_erc721Harberger));
 
         // act
         vm.startPrank(_bob);
@@ -106,7 +104,25 @@ contract HarbergerTest is ERC721Test {
         assertEq(_tokenA.balanceOf(_alice), lAliceBal + lPrice);
     }
     function test_buy_during_auction_period() external {
-        // check taxes not refunded to prev owner + contract gets the price
+        // arrange
+        test_mint(Constants.MIN_NFT_PRICE * 5);
+        _stepTime(Constants.TAX_EPOCH_DURATION * 2);
+        uint256 lAliceBal = _tokenA.balanceOf(_alice);
+        uint256 lBobBal = _tokenA.balanceOf(_bob);
+        _erc721Harberger.seizeDelinquentNft(0);
+
+        // act
+        vm.startPrank(_bob);
+        _tokenA.approve(address(_erc721Harberger), type(uint256).max);
+        _erc721Harberger.buy(0, Constants.MIN_NFT_PRICE * 2);
+        vm.stopPrank();
+
+        // assert
+        assertEq(_erc721Harberger.ownerOf(0), _bob);
+        assertEq(_erc721Harberger.balanceOf(_bob), 1);
+        assertEq(_erc721Harberger.getPrice(0), Constants.MIN_NFT_PRICE);
+        assertEq(_tokenA.balanceOf(_bob), lBobBal - Constants.MIN_NFT_PRICE - Utils.calcTaxDue(Constants.MIN_NFT_PRICE, 1e12, _erc721Harberger.taxRate()));
+        assertEq(_tokenA.balanceOf(_alice), lAliceBal);
     }
 
     function test_buy_during_post_auction_period() external {
