@@ -52,6 +52,11 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         _;
     }
 
+    modifier validateTokenId(uint256 aTokenId) {
+        _requireOwned(aTokenId);
+        _;
+    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////////
     //                                  GOVERNOR FUNCTIONS                                       //
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -198,32 +203,23 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     }
 
     /// @inheritdoc IERC721Harberger
-    function getPrice(uint256 aTokenId) external view returns (uint256 rPrice) {
-        _requireOwned(aTokenId);
+    function getPrice(uint256 aTokenId) external view validateTokenId(aTokenId) returns (uint256 rPrice) {
         rPrice = _taxInfo[aTokenId].price;
     }
 
     /// @inheritdoc IERC721Harberger
-    function taxEpochEnd(uint256 aTokenId) public view returns (uint256) {
-        _requireOwned(aTokenId);
+    function taxEpochEnd(uint256 aTokenId) public view validateTokenId(aTokenId) returns (uint256) {
         // SAFETY: Addition does not overflow for human scale times
         return _taxInfo[aTokenId].lastPaidTimestamp + TAX_EPOCH_DURATION;
     }
 
-    function _gracePeriodEnd(uint256 aTokenId) internal view returns (uint256) {
-        // SAFETY: Addition does not overflow for human scale times
-        return taxEpochEnd(aTokenId) + GRACE_PERIOD;
-    }
-
     /// @inheritdoc IERC721Harberger
-    function isInGracePeriod(uint256 aTokenId) public view returns (bool) {
-        _requireOwned(aTokenId);
+    function isInGracePeriod(uint256 aTokenId) public view validateTokenId(aTokenId) returns (bool) {
         return block.timestamp > taxEpochEnd(aTokenId) && block.timestamp <= _gracePeriodEnd(aTokenId);
     }
 
     /// @inheritdoc IERC721Harberger
-    function isDelinquent(uint256 aTokenId) public view returns (bool) {
-        _requireOwned(aTokenId);
+    function isDelinquent(uint256 aTokenId) public view validateTokenId(aTokenId) returns (bool) {
         return block.timestamp > _gracePeriodEnd(aTokenId);
     }
 
@@ -255,6 +251,11 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         } else {
             PAYMENT_TOKEN.safeTransfer(aTo, aAmount);
         }
+    }
+
+    function _gracePeriodEnd(uint256 aTokenId) internal view returns (uint256) {
+        // SAFETY: Addition does not overflow for human scale times
+        return taxEpochEnd(aTokenId) + GRACE_PERIOD;
     }
 
     function _updateTaxInfo(uint256 aTokenId, uint256 aPrice, uint256 aTaxPaid) internal {
