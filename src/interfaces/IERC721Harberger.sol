@@ -96,9 +96,9 @@ interface IERC721Harberger {
     /// @dev Reverts if the token does not exist
     function isInGracePeriod(uint256 aTokenId) external view returns (bool);
 
-    /// @notice Checks if an NFT is in a delinquent state with unpaid taxes
+    /// @notice Checks if an NFT is in a delinquent state (past both tax epoch and grace period)
     /// @param aTokenId The token ID to check
-    /// @return True if block.timestamp > gracePeriodEnd (past both tax epoch and grace period)
+    /// @return True if block.timestamp > gracePeriodEnd
     /// @dev Delinquent NFTs are subject to forced sale via reverse Dutch auction
     /// @dev Reverts if the token does not exist
     function isDelinquent(uint256 aTokenId) external view returns (bool);
