@@ -81,4 +81,11 @@ contract PriceRangeInvariants is BaseTest {
             assertTrue(lPrice >= Constants.MIN_NFT_PRICE && lPrice <= Constants.MAX_SUPPORTED_PRICE);
         }
     }
+
+    function invariant_NFTsShouldNotBeOwnedByContract() public view {
+        for (uint256 i; i < _mintedTokenIds.length; ++i) {
+            address lOwner = _erc721Harberger.ownerOf(_mintedTokenIds[i]);
+            assertNotEq(lOwner, address(_erc721Harberger));
+        }
+    }
 }
