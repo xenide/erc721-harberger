@@ -14,6 +14,15 @@ runs = 256
 runs = 256
 depth = 50
 
+[profile.default.model_checker]
+engine = "chc"
+solvers = ["z3"]
+timeout = 100_000
+contracts = {"./src/ERC721Harberger.sol" = ["ERC721Harberger"]}
+invariants = ["contract", "reentrancy"]
+show_unproved = true
+targets = ["assert", "underflow", "overflow", "divByZero"]
+
 [profile.ci.fuzz]
 runs = 10_000
 
