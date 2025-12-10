@@ -9,10 +9,15 @@ verbosity = 3
 
 [fuzz]
 runs = 256
-invariant_runs = 256
+
+[invariant]
+runs = 256
 
 [profile.ci.fuzz]
 runs = 10_000
+
+[profile.ci.invariant]
+invariant_runs = 10_000
 
 [profile.coverage]
 optimizer = false
