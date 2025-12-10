@@ -89,6 +89,8 @@ interface IERC721Harberger {
     /// @dev Reverts if the token does not exist
     function taxEpochEnd(uint256 aTokenId) external view returns (uint256);
 
+    function isCompliant(uint256 aTokenId) external view returns (bool);
+
     /// @notice Checks if an NFT is currently in the grace period
     /// @param aTokenId The token ID to check
     /// @return True if block.timestamp > taxEpochEnd && block.timestamp <= gracePeriodEnd

@@ -88,4 +88,18 @@ contract PriceRangeInvariants is BaseTest {
             assertNotEq(lOwner, address(_erc721Harberger));
         }
     }
+
+    function invariant_OnlyOneStatusApplicable() public view {
+        for (uint256 i; i < _mintedTokenIds.length; ++i) {
+            uint256 lTrueCounter;
+            bool isCompliant = _erc721Harberger.isCompliant(i);
+            bool isInGracePeriod = _erc721Harberger.isInGracePeriod(i);
+            bool isDelinquent = _erc721Harberger.isDelinquent(i);
+            if (isCompliant) ++lTrueCounter;
+            if (isInGracePeriod) ++lTrueCounter;
+            if (isDelinquent) ++lTrueCounter;
+
+            assertTrue(lTrueCounter == 1);
+        }
+    }
 }
