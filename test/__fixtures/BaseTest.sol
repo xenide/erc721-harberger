@@ -27,7 +27,7 @@ contract BaseTest is Test {
         vm.warp(vm.getBlockTimestamp() + aTime);
     }
 
-    function setUp() public {
+    function setUp() public virtual {
         _tokenA = new MintableERC20("TokenA", "TA", 6);
         _tokenB = new MintableERC20("TokenB", "TB", 18);
         _erc721Harberger = new ERC721Harberger(address(this), IERC20(address(_tokenA)), address(this));
