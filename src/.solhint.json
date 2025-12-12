@@ -3,6 +3,7 @@
   "rules": {
     "compiler-version": ["error", ">=0.8.0"],
     "func-visibility": ["error", { "ignoreConstructors": true }],
+    "gas-strict-inequalities": "off",
     "not-rely-on-time": "off",
     "no-inline-assembly": "off"
   }
