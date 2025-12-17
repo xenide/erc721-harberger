@@ -27,7 +27,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     uint256 public immutable GRACE_PERIOD = Constants.GRACE_PERIOD;
     IERC20 public immutable PAYMENT_TOKEN;
     uint256 public immutable PAYMENT_TOKEN_PRECISION_MULTIPLIER;
-    address public feeReceiver;
+    address public immutable feeReceiver;
 
     mapping(uint256 tokenId => TaxInfo) private _taxInfo;
     uint256 private _tokenCounter;
