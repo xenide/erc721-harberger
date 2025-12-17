@@ -11,5 +11,5 @@ library Constants {
 
     uint256 public constant MIN_NFT_PRICE = 1e6;
 
-    uint256 public constant MAX_SUPPORTED_PRICE = type(uint128).max;
+    uint256 public constant MAX_SUPPORTED_PRICE = type(uint112).max;
 }
