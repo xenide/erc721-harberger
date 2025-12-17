@@ -218,6 +218,11 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     }
 
     /// @inheritdoc IERC721Harberger
+    function isCompliant(uint256 aTokenId) public view validateTokenId(aTokenId) returns (bool) {
+        return block.timestamp <= taxEpochEnd(aTokenId);
+    }
+
+    /// @inheritdoc IERC721Harberger
     function isInGracePeriod(uint256 aTokenId) public view validateTokenId(aTokenId) returns (bool) {
         return block.timestamp > taxEpochEnd(aTokenId) && block.timestamp <= _gracePeriodEnd(aTokenId);
     }
