@@ -1,0 +1,6 @@
+{
+  "exclude_dependencies": true,
+  "exclude_informational": true,
+  "exclude_optimization": true,
+  "filter_paths": "lib|test|script|docs|cache|out|node_modules|snapshots"
+}
