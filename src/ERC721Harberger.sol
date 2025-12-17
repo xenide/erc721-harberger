@@ -19,15 +19,20 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     using FixedPointMathLib for uint256;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
-    //                                        STORAGE                                            //
+    //                                     IMMUTABLES                                            //
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
-    uint256 public taxRate = Constants.DEFAULT_TAX_RATE;
     uint256 public immutable TAX_EPOCH_DURATION = Constants.TAX_EPOCH_DURATION;
     uint256 public immutable GRACE_PERIOD = Constants.GRACE_PERIOD;
     IERC20 public immutable PAYMENT_TOKEN;
     uint256 public immutable PAYMENT_TOKEN_PRECISION_MULTIPLIER;
     address public immutable feeReceiver;
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    //                                        STORAGE                                            //
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    uint256 public taxRate = Constants.DEFAULT_TAX_RATE;
 
     mapping(uint256 tokenId => TaxInfo) private _taxInfo;
     uint256 private _tokenCounter;
