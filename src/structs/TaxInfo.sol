@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 struct TaxInfo {
-    uint256 price;
-    uint256 lastPaidTimestamp;
-    uint256 lastPaidAmt;
+    uint112 price;
+    uint112 lastPaidAmt;
+    uint32 lastPaidTimestamp;
 }

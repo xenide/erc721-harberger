@@ -13,10 +13,12 @@ import { IERC721Harberger } from "./interfaces/IERC721Harberger.sol";
 import { Ownable } from "../lib/solady/src/auth/Ownable.sol";
 import { ReentrancyGuardTransient } from "../lib/solady/src/utils/ReentrancyGuardTransient.sol";
 import { TaxInfo } from "./structs/TaxInfo.sol";
+import { SafeCastLib } from "../lib/solady/src/utils/SafeCastLib.sol";
 
 contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTransient, Events {
     using SafeERC20 for IERC20;
     using FixedPointMathLib for uint256;
+    using SafeCastLib for uint256;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     //                                     IMMUTABLES                                            //
@@ -91,6 +93,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         uint256 lRemainingTaxCredit = 0;
         uint256 lGracePeriodPenalty = 0;
         // happy case: NFT is in a tax compliant state, and not in a grace period state
+        // SAFETY: Multiplication does not overflow given datatypes
         if (!isInGracePeriod(aTokenId)) {
             lRemainingTaxCredit = _taxInfo[aTokenId].lastPaidAmt * (taxEpochEnd(aTokenId) - block.timestamp)
                 / Constants.TAX_EPOCH_DURATION;
@@ -183,8 +186,9 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         else if (block.timestamp < lAuctionPeriodEnd) {
             // reverse dutch auction from end of grace period to end of auction
             // with prices slowing decaying to the minimum price
-            lPrice = lInfo.price.fullMulDiv(lAuctionPeriodEnd - block.timestamp, Constants.TAX_EPOCH_DURATION)
-                .max(Constants.MIN_NFT_PRICE);
+            // SAFETY: Does not overflow given datatypes
+            lPrice = (lInfo.price * (lAuctionPeriodEnd - block.timestamp) / Constants.TAX_EPOCH_DURATION)
+            .max(Constants.MIN_NFT_PRICE);
             assert(lPrice <= lInfo.price && lPrice >= Constants.MIN_NFT_PRICE);
         }
         // Case 3: Beyond the auction period, buyer pays minimum price
@@ -268,9 +272,9 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     }
 
     function _updateTaxInfo(uint256 aTokenId, uint256 aPrice, uint256 aTaxPaid) internal {
-        _taxInfo[aTokenId].price = aPrice;
-        _taxInfo[aTokenId].lastPaidTimestamp = block.timestamp;
-        _taxInfo[aTokenId].lastPaidAmt = aTaxPaid;
+        _taxInfo[aTokenId].price = aPrice.toUint112();
+        _taxInfo[aTokenId].lastPaidAmt = aTaxPaid.toUint112();
+        _taxInfo[aTokenId].lastPaidTimestamp = block.timestamp.toUint32();
     }
 
     /// @param aTaxableAmt in native precision
