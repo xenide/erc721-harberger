@@ -19,15 +19,20 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
     using FixedPointMathLib for uint256;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
-    //                                        STORAGE                                            //
+    //                                     IMMUTABLES                                            //
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
-    uint256 public taxRate = Constants.DEFAULT_TAX_RATE;
     uint256 public immutable TAX_EPOCH_DURATION = Constants.TAX_EPOCH_DURATION;
     uint256 public immutable GRACE_PERIOD = Constants.GRACE_PERIOD;
     IERC20 public immutable PAYMENT_TOKEN;
     uint256 public immutable PAYMENT_TOKEN_PRECISION_MULTIPLIER;
-    address public feeReceiver;
+    address public immutable feeReceiver;
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    //                                        STORAGE                                            //
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    uint256 public taxRate = Constants.DEFAULT_TAX_RATE;
 
     mapping(uint256 tokenId => TaxInfo) private _taxInfo;
     uint256 private _tokenCounter;
@@ -83,8 +88,8 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         require(aNewPrice >= Constants.MIN_NFT_PRICE, Errors.NFTPriceTooLow());
         require(aNewPrice <= Constants.MAX_SUPPORTED_PRICE, Errors.NFTPriceTooHigh());
 
-        uint256 lRemainingTaxCredit;
-        uint256 lGracePeriodPenalty;
+        uint256 lRemainingTaxCredit = 0;
+        uint256 lGracePeriodPenalty = 0;
         // happy case: NFT is in a tax compliant state, and not in a grace period state
         if (!isInGracePeriod(aTokenId)) {
             lRemainingTaxCredit = _taxInfo[aTokenId].lastPaidAmt * (taxEpochEnd(aTokenId) - block.timestamp)
@@ -157,8 +162,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         uint256 lPrice;
         uint256 lAuctionPeriodEnd = _gracePeriodEnd(aTokenId) + Constants.TAX_EPOCH_DURATION;
 
-        uint256 lTotalDue;
-        uint256 lTotalRefundPrevOwner;
+        uint256 lTotalRefundPrevOwner = 0;
 
         // Case 1: Buy during tax epoch and grace period
         if (block.timestamp <= _gracePeriodEnd(aTokenId)) {
@@ -189,7 +193,7 @@ contract ERC721Harberger is IERC721Harberger, ERC721, Ownable, ReentrancyGuardTr
         }
 
         uint256 lTaxes = _calcTaxDue(lPrice);
-        lTotalDue = lPrice + lTaxes;
+        uint256 lTotalDue = lPrice + lTaxes;
         require(lTotalDue <= aMaxPriceIncludingTaxes, Errors.MaxPriceIncludingTaxesExceeded());
         _pull(msg.sender, lTotalDue);
         _updateTaxInfo(aTokenId, lPrice, lTaxes);

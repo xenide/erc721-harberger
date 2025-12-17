@@ -1,0 +1,7 @@
+{
+  "exclude_dependencies": true,
+  "exclude_informational": true,
+  "exclude_optimization": false,
+  "filter_paths": "lib|test|script|docs|cache|out|node_modules|snapshots",
+  "detectors_to_exclude": "timestamp, missing-zero-check"
+}
