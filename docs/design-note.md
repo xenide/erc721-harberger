@@ -70,13 +70,15 @@
 
 1. Introduce `setPrices` that accepts an array to allow batch management of NFTs.
 2. allow new buyer to set higher price in `buy` when (in the same tx) rather than having to call `setPrice` again 
-2. Solution to the tax rate decrease edge case:
+3. Solution to the tax rate decrease edge case:
     - Ramping for effective rate.
-3. Storage efficient `TaxInfo` struct.
-    - uint112, uint112, uint32 for timestamp, good till year 2106
-    - didn't implement due to time constraints
 4. via-ir compilation for gas savings + smaller contract size.
 5. slither scanning for contracts
+   - implemented 
+3. Storage efficient `TaxInfo` struct.
+   - uint112, uint112, uint32 for timestamp, good till year 2106
+   - didn't implement due to time constraints
+   - implemented
 
 ## Assumptions
 
